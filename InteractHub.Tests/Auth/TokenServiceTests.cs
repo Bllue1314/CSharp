@@ -1,93 +1,116 @@
-namespace InteractHub.Tests.Services;
+// Auth/TokenServiceTests.cs
+namespace InteractHub.Tests.Auth;
 
 /// <summary>
-/// Unit tests for NotificationsService
+/// Unit tests for JWT TokenService
 /// </summary>
-public class NotificationsServiceTests
+public class TokenServiceTests
 {
-    private NotificationsService CreateService(AppDbContext context) =>
-        new NotificationsService(context);
+    private readonly Mock<IConfiguration> _configMock;
+    private readonly Mock<UserManager<User>> _userManagerMock;
 
-    /// <summary>Getting notifications returns only current user's notifications</summary>
-    [Fact]
-    public async Task GetAllAsync_ReturnsOnlyCurrentUsersNotifications()
+    public TokenServiceTests()
     {
-        // Arrange
-        var context = TestDbContextFactory.Create();
-        var user1   = TestDbContextFactory.SeedUser(context, "user-1");
-        var user2   = TestDbContextFactory.SeedUser(context, "user-2");
-        var service = CreateService(context);
+        // Mock IConfiguration to return JWT settings
+        _configMock = new Mock<IConfiguration>();
+        _configMock.Setup(c => c["JwtSettings:SecretKey"])
+                   .Returns("SuperSecretTestKeyThatIsLongEnough123!");
+        _configMock.Setup(c => c["JwtSettings:Issuer"])
+                   .Returns("InteractHub.API");
+        _configMock.Setup(c => c["JwtSettings:Audience"])
+                   .Returns("InteractHub.Client");
+        _configMock.Setup(c => c["JwtSettings:ExpirationInDays"])
+                   .Returns("7");
 
-        await service.CreateAsync(user1.Id, NotificationType.Like, "You got a like");
-        await service.CreateAsync(user2.Id, NotificationType.Like, "Other user notification");
-
-        // Act
-        var result = await service.GetAllAsync(user1.Id);
-
-        // Assert
-        result.Should().HaveCount(1);
-        result.First().Message.Should().Be("You got a like");
+        // Mock UserManager (requires several constructor params)
+        var store = new Mock<IUserStore<User>>();
+        _userManagerMock = new Mock<UserManager<User>>(
+            store.Object, null, null, null, null, null, null, null, null);
     }
 
-    /// <summary>Marking a notification as read should update IsRead</summary>
+    /// <summary>Token generation for valid user should return non-empty string</summary>
     [Fact]
-    public async Task MarkAsReadAsync_ValidNotification_ReturnsTrue()
+    public async Task GenerateTokenAsync_ValidUser_ReturnsToken()
     {
         // Arrange
-        var context = TestDbContextFactory.Create();
-        var user    = TestDbContextFactory.SeedUser(context, "user-1");
-        var service = CreateService(context);
+        var user = new User
+        {
+            Id          = "user-1",
+            UserName    = "testuser",
+            Email       = "test@example.com",
+            DisplayName = "Test User"
+        };
 
-        await service.CreateAsync(user.Id, NotificationType.Comment, "New comment");
-        var notification = await context.Notifications.FirstAsync();
+        _userManagerMock
+            .Setup(m => m.GetRolesAsync(user))
+            .ReturnsAsync(new List<string> { "User" });
+
+        var service = new TokenService(_userManagerMock.Object, _configMock.Object);
 
         // Act
-        var result = await service.MarkAsReadAsync(notification.Id, user.Id);
+        var token = await service.GenerateTokenAsync(user);
 
         // Assert
-        result.Should().BeTrue();
-        notification.IsRead.Should().BeTrue();
+        token.Should().NotBeNullOrEmpty();
+        token.Split('.').Should().HaveCount(3); // JWT has 3 parts
     }
 
-    /// <summary>Marking all notifications should update all unread ones</summary>
+    /// <summary>Token should contain correct user claims</summary>
     [Fact]
-    public async Task MarkAllAsReadAsync_MarksAllUnread()
+    public async Task GenerateTokenAsync_ContainsCorrectClaims()
     {
         // Arrange
-        var context = TestDbContextFactory.Create();
-        var user    = TestDbContextFactory.SeedUser(context, "user-1");
-        var service = CreateService(context);
+        var user = new User
+        {
+            Id          = "user-123",
+            UserName    = "claimuser",
+            Email       = "claim@example.com",
+            DisplayName = "Claim User"
+        };
 
-        await service.CreateAsync(user.Id, NotificationType.Like,    "Like 1");
-        await service.CreateAsync(user.Id, NotificationType.Comment, "Comment 1");
-        await service.CreateAsync(user.Id, NotificationType.Like,    "Like 2");
+        _userManagerMock
+            .Setup(m => m.GetRolesAsync(user))
+            .ReturnsAsync(new List<string> { "Admin" });
+
+        var service = new TokenService(_userManagerMock.Object, _configMock.Object);
 
         // Act
-        await service.MarkAllAsReadAsync(user.Id);
+        var token   = await service.GenerateTokenAsync(user);
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwt     = handler.ReadJwtToken(token);
 
         // Assert
-        var allRead = await context.Notifications
-            .AllAsync(n => n.IsRead);
-        allRead.Should().BeTrue();
+        jwt.Claims.Should().Contain(c =>
+            c.Type == "nameid" && c.Value == "user-123");
+        jwt.Claims.Should().Contain(c =>
+            c.Type == "role" && c.Value == "Admin");
     }
 
-    /// <summary>Marking a notification belonging to another user should fail</summary>
+    /// <summary>Token should expire after configured days</summary>
     [Fact]
-    public async Task MarkAsReadAsync_WrongUser_ReturnsFalse()
+    public async Task GenerateTokenAsync_TokenExpiresAfterConfiguredDays()
     {
         // Arrange
-        var context   = TestDbContextFactory.Create();
-        var user1     = TestDbContextFactory.SeedUser(context, "user-1");
-        var user2     = TestDbContextFactory.SeedUser(context, "user-2");
-        var service   = CreateService(context);
+        var user = new User
+        {
+            Id          = "user-1",
+            UserName    = "testuser",
+            Email       = "test@example.com",
+            DisplayName = "Test User"
+        };
 
-        await service.CreateAsync(user1.Id, NotificationType.Like, "Like notification");
-        var notification = await context.Notifications.FirstAsync();
+        _userManagerMock
+            .Setup(m => m.GetRolesAsync(user))
+            .ReturnsAsync(new List<string>());
+
+        var service = new TokenService(_userManagerMock.Object, _configMock.Object);
 
         // Act
-        var result = await service.MarkAsReadAsync(notification.Id, user2.Id);
+        var token   = await service.GenerateTokenAsync(user);
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jwt     = handler.ReadJwtToken(token);
 
         // Assert
-        result.Should().BeFalse();
+        jwt.ValidTo.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromMinutes(1));
     }
 }
