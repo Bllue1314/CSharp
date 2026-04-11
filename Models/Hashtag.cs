@@ -1,4 +1,3 @@
-using System;
 public class Hashtag
 {
     public int Id { get; set; }

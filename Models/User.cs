@@ -1,5 +1,3 @@
-using System;
-
 public class User : IdentityUser
 {
     [MaxLength(100)]

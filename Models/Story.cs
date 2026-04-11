@@ -1,5 +1,3 @@
-using System;
-
 public class Story
 {
     public int Id { get; set; }

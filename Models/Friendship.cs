@@ -1,5 +1,3 @@
-using System;
-
 public enum FriendshipStatus { Pending, Accepted, Rejected, Blocked }
 
 public class Friendship

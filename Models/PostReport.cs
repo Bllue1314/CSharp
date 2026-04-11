@@ -1,5 +1,3 @@
-using System;
-
 public enum ReportReason { Spam, Harassment, HateSpeech, FakeNews, Other }
 
 public class PostReport
