@@ -17,6 +17,30 @@ public class AppDbContext : IdentityDbContext<User>
     {
         base.OnModelCreating(builder); // MUST call this for Identity tables
 
+    builder.Entity<Comment>()
+        .HasOne(c => c.User)
+        .WithMany(u => u.Comments)
+        .HasForeignKey(c => c.UserId)
+        .OnDelete(DeleteBehavior.Restrict);  // prevent cycle
+
+    builder.Entity<Like>()
+        .HasOne(l => l.User)
+        .WithMany(u => u.Likes)
+        .HasForeignKey(l => l.UserId)
+        .OnDelete(DeleteBehavior.Restrict);  // prevent cycle
+
+    builder.Entity<PostReport>()
+        .HasOne(r => r.User)
+        .WithMany(u => u.PostReports)
+        .HasForeignKey(r => r.UserId)
+        .OnDelete(DeleteBehavior.Restrict);  // prevent cycle
+
+    builder.Entity<Notification>()
+        .HasOne(n => n.User)
+        .WithMany(u => u.Notifications)
+        .HasForeignKey(n => n.UserId)
+        .OnDelete(DeleteBehavior.Restrict);  // prevent cycle
+
         // ── PostHashtag composite PK ──────────────────────────────────
         builder.Entity<PostHashtag>()
             .HasKey(ph => new { ph.PostId, ph.HashtagId });

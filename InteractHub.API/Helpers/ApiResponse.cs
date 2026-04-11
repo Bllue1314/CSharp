@@ -1,3 +1,4 @@
+namespace InteractHub.API.Helpers;
 public class ApiResponse<T>
 {
     public bool Success { get; set; }
