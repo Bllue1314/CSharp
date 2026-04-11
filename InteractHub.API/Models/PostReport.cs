@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 namespace InteractHub.API.Models;
 public enum ReportReason { Spam, Harassment, HateSpeech, FakeNews, Other }
 

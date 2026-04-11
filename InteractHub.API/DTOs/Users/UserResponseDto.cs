@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 namespace InteractHub.API.DTOs.Users;
 public class UserResponseDto
 {

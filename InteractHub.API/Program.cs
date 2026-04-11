@@ -1,7 +1,9 @@
-// Program.cs (complete)
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +63,41 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer           = true,
+        ValidateAudience         = true,
+        ValidateLifetime         = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer              = builder.Configuration["JwtSettings:Issuer"],
+        ValidAudience            = builder.Configuration["JwtSettings:Audience"],
+        IssuerSigningKey         = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!))
+    };
+});
+
+// ── Register TokenService ─────────────────────────────────────────────
+builder.Services.AddScoped<ITokenService, TokenService>();
+
+// ── Services ──────────────────────────────────────────────────────────
+builder.Services.AddScoped<IPostsService,         PostsService>();
+builder.Services.AddScoped<IUsersService,         UsersService>();
+builder.Services.AddScoped<IFriendsService,       FriendsService>();
+builder.Services.AddScoped<IStoriesService,       StoriesService>();
+builder.Services.AddScoped<INotificationsService, NotificationsService>();
+builder.Services.AddScoped<IBlobStorageService,   BlobStorageService>();
+builder.Services.AddScoped<ITokenService,         TokenService>();
+
+// ── Repository ────────────────────────────────────────────────────────
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 var app = builder.Build();
 

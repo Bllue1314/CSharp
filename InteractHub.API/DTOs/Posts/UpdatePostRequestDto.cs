@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 namespace InteractHub.API.DTOs.Posts;
 public class CreatePostRequestDto
 {

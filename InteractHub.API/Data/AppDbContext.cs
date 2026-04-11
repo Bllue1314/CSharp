@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using InteractHub.API.Models;
 namespace InteractHub.API.Data;
 public class AppDbContext : IdentityDbContext<User>
 {
