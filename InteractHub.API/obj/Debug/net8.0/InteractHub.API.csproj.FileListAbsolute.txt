@@ -1,0 +1,9 @@
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.csproj.AssemblyReference.cache
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.AssemblyInfoInputs.cache
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.AssemblyInfo.cs
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.csproj.CoreCompileInputs.cache
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\ASUS\Documents\GitHub\CSharp\InteractHub.API\obj\Debug\net8.0\InteractHub.API.sourcelink.json

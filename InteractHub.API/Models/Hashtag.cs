@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace InteractHub.API.Models;
 public class Hashtag
 {
     public int Id { get; set; }

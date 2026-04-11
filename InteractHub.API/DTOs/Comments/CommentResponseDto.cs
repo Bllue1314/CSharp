@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Comments;
 public class CommentResponseDto
 {
     public int Id { get; set; }

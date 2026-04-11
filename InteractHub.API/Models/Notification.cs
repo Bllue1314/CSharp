@@ -1,3 +1,7 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+namespace InteractHub.API.Models;
+
 public enum NotificationType { Like, Comment, FriendRequest, FriendAccepted, Mention }
 
 public class Notification

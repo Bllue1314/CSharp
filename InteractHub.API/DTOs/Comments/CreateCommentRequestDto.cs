@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Comments;
 public class CreateCommentRequestDto
 {
     [Required, MaxLength(1000)]

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Stories;
 public class CreateStoryRequestDto
 {
     [MaxLength(500)]

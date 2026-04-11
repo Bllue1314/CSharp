@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Posts;
 public class PostResponseDto
 {
     public int Id { get; set; }

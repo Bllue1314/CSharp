@@ -1,23 +1,17 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 namespace InteractHub.API.Models;
-public class Story
+public class Like
 {
     public int Id { get; set; }
-
-    public string? ImageUrl { get; set; }
-
-    [MaxLength(500)]
-    public string? TextContent { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public DateTime ExpiresAt { get; set; } = DateTime.UtcNow.AddHours(24);
-    public bool IsActive => DateTime.UtcNow < ExpiresAt;
 
     // FK
     [Required]
     public string UserId { get; set; } = string.Empty;
+    public int PostId { get; set; }
 
     // Navigation
     public User User { get; set; } = null!;
+    public Post Post { get; set; } = null!;
 }

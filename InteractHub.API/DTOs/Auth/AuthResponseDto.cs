@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Auth;
 public class AuthResponseDto
 {
     public string Token { get; set; } = string.Empty;

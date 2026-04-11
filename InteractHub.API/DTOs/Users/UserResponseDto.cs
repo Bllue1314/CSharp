@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Users;
 public class UserResponseDto
 {
     public string Id { get; set; } = string.Empty;

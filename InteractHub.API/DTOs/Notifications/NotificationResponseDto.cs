@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Notifications;
 public class NotificationResponseDto
 {
     public int Id { get; set; }

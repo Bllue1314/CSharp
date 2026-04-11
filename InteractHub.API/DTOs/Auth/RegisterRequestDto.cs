@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Auth;
 public class RegisterRequestDto
 {
     [Required, MaxLength(50)]

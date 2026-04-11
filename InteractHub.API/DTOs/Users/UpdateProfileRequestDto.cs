@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Users;
 public class UpdateProfileRequestDto
 {
     [MaxLength(100)]

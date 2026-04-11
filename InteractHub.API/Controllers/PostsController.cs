@@ -1,82 +1,125 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using InteractHub.API.DTOs;
+using InteractHub.API.Services.Interfaces;
+using InteractHub.API.Helpers;
+namespace InteractHub.API.Controllers;
+
+// Controllers/PostsController.cs
 [ApiController]
-[Route("api/auth")]
+[Route("api/posts")]
+[Authorize]
 [Produces("application/json")]
-public class AuthController : ControllerBase
+public class PostsController : ControllerBase
 {
-    private readonly UserManager<User> _userManager;
-    private readonly ITokenService _tokenService;
+    private readonly IPostsService _postsService;
 
-    public AuthController(UserManager<User> userManager, ITokenService tokenService)
+    public PostsController(IPostsService postsService)
     {
-        _userManager = userManager;
-        _tokenService = tokenService;
+        _postsService = postsService;
     }
 
-    /// <summary>Register a new user account</summary>
-    /// <response code="201">User created successfully</response>
-    /// <response code="400">Validation errors or email already exists</response>
-    [HttpPost("register")]
-    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), 201)]
-    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), 400)]
-    public async Task<IActionResult> Register([FromBody] RegisterRequestDto dto)
+    /// <summary>Get paginated post feed</summary>
+    [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<List<PostResponseDto>>), 200)]
+    public async Task<IActionResult> GetFeed([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var posts = await _postsService.GetFeedAsync(userId, page, pageSize);
+        return Ok(ApiResponse<List<PostResponseDto>>.Ok(posts));
+    }
+
+    /// <summary>Get a single post by ID</summary>
+    [HttpGet("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 404)]
+    public async Task<IActionResult> GetById(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var post = await _postsService.GetByIdAsync(id, userId);
+        if (post == null)
+            return NotFound(ApiResponse<PostResponseDto>.Fail("Post not found"));
+
+        return Ok(ApiResponse<PostResponseDto>.Ok(post));
+    }
+
+    /// <summary>Create a new post</summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 201)]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 400)]
+    public async Task<IActionResult> Create([FromForm] CreatePostRequestDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ApiResponse<AuthResponseDto>.Fail(
+            return BadRequest(ApiResponse<PostResponseDto>.Fail(
                 ModelState.Values.SelectMany(v => v.Errors)
                                  .Select(e => e.ErrorMessage).ToList()));
 
-        var user = new User
-        {
-            UserName = dto.Username,
-            Email = dto.Email,
-            DisplayName = dto.DisplayName
-        };
-
-        var result = await _userManager.CreateAsync(user, dto.Password);
-        if (!result.Succeeded)
-            return BadRequest(ApiResponse<AuthResponseDto>.Fail(
-                result.Errors.Select(e => e.Description).ToList()));
-
-        await _userManager.AddToRoleAsync(user, "User");
-        var token = await _tokenService.GenerateTokenAsync(user);
-
-        return StatusCode(201, ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
-        {
-            Token = token,
-            UserId = user.Id,
-            Username = user.UserName!,
-            Email = user.Email!,
-            DisplayName = user.DisplayName
-        }, "Account created successfully"));
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var post = await _postsService.CreateAsync(dto, userId);
+        return StatusCode(201, ApiResponse<PostResponseDto>.Ok(post, "Post created"));
     }
 
-    /// <summary>Login with email and password</summary>
-    /// <response code="200">Returns JWT token</response>
-    /// <response code="401">Invalid credentials</response>
-    [HttpPost("login")]
-    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), 200)]
-    [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), 401)]
-    public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
+    /// <summary>Update an existing post</summary>
+    [HttpPut("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 403)]
+    [ProducesResponseType(typeof(ApiResponse<PostResponseDto>), 404)]
+    public async Task<IActionResult> Update(int id, [FromBody] UpdatePostRequestDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var result = await _postsService.UpdateAsync(id, dto, userId);
+        if (result == null)
+            return NotFound(ApiResponse<PostResponseDto>.Fail("Post not found"));
+
+        return Ok(ApiResponse<PostResponseDto>.Ok(result, "Post updated"));
+    }
+
+    /// <summary>Delete a post</summary>
+    [HttpDelete("{id}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    [ProducesResponseType(typeof(ApiResponse<object>), 404)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var success = await _postsService.DeleteAsync(id, userId);
+        if (!success)
+            return NotFound(ApiResponse<object>.Fail("Post not found"));
+
+        return Ok(ApiResponse<object>.Ok(null, "Post deleted"));
+    }
+
+    /// <summary>Like or unlike a post</summary>
+    [HttpPost("{id}/like")]
+    [ProducesResponseType(typeof(ApiResponse<object>), 200)]
+    public async Task<IActionResult> ToggleLike(int id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var liked = await _postsService.ToggleLikeAsync(id, userId);
+        return Ok(ApiResponse<object>.Ok(null, liked ? "Post liked" : "Post unliked"));
+    }
+
+    /// <summary>Get comments for a post</summary>
+    [HttpGet("{id}/comments")]
+    [ProducesResponseType(typeof(ApiResponse<List<CommentResponseDto>>), 200)]
+    public async Task<IActionResult> GetComments(int id)
+    {
+        var comments = await _postsService.GetCommentsAsync(id);
+        return Ok(ApiResponse<List<CommentResponseDto>>.Ok(comments));
+    }
+
+    /// <summary>Add a comment to a post</summary>
+    [HttpPost("{id}/comments")]
+    [ProducesResponseType(typeof(ApiResponse<CommentResponseDto>), 201)]
+    public async Task<IActionResult> AddComment(int id, [FromBody] CreateCommentRequestDto dto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ApiResponse<AuthResponseDto>.Fail(
+            return BadRequest(ApiResponse<CommentResponseDto>.Fail(
                 ModelState.Values.SelectMany(v => v.Errors)
                                  .Select(e => e.ErrorMessage).ToList()));
 
-        var user = await _userManager.FindByEmailAsync(dto.Email);
-        if (user == null || !await _userManager.CheckPasswordAsync(user, dto.Password))
-            return Unauthorized(ApiResponse<AuthResponseDto>.Fail("Invalid email or password"));
-
-        var token = await _tokenService.GenerateTokenAsync(user);
-
-        return Ok(ApiResponse<AuthResponseDto>.Ok(new AuthResponseDto
-        {
-            Token = token,
-            UserId = user.Id,
-            Username = user.UserName!,
-            Email = user.Email!,
-            DisplayName = user.DisplayName,
-            AvatarUrl = user.AvatarUrl
-        }));
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var comment = await _postsService.AddCommentAsync(id, dto, userId);
+        return StatusCode(201, ApiResponse<CommentResponseDto>.Ok(comment, "Comment added"));
     }
 }

@@ -1,3 +1,11 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using InteractHub.API.DTOs;
+using InteractHub.API.Services.Interfaces;
+using InteractHub.API.Helpers;
+namespace InteractHub.API.Controllers;
+
 [ApiController]
 [Route("api/notifications")]
 [Authorize]

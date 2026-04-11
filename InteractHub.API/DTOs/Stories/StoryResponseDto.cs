@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace InteractHub.API.DTOs.Stories;
 public class StoryResponseDto
 {
     public int Id { get; set; }
