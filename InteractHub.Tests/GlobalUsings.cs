@@ -1,0 +1,14 @@
+global using Xunit;
+global using Moq;
+global using FluentAssertions;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.AspNetCore.Identity;
+global using InteractHub.API.Models;
+global using InteractHub.API.Data;
+global using InteractHub.API.DTOs.Posts;
+global using InteractHub.API.DTOs.Auth;
+global using InteractHub.API.DTOs.Users;
+global using InteractHub.API.DTOs.Comments;
+global using InteractHub.API.Services.Implementations;
+global using InteractHub.API.Services.Interfaces;
+global using InteractHub.Tests.Helpers;
