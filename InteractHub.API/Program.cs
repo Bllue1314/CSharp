@@ -28,6 +28,9 @@ builder.Services.AddCors(options =>
               .AllowCredentials());
 });
 
+builder.Services.AddControllers();
+builder.Services.AddAuthorization();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -84,19 +87,14 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
-
-// ── Register TokenService ─────────────────────────────────────────────
-builder.Services.AddScoped<ITokenService, TokenService>();
-
 // ── Services ──────────────────────────────────────────────────────────
+builder.Services.AddScoped<ITokenService,         TokenService>();
 builder.Services.AddScoped<IPostsService,         PostsService>();
 builder.Services.AddScoped<IUsersService,         UsersService>();
 builder.Services.AddScoped<IFriendsService,       FriendsService>();
 builder.Services.AddScoped<IStoriesService,       StoriesService>();
 builder.Services.AddScoped<INotificationsService, NotificationsService>();
 builder.Services.AddScoped<IBlobStorageService,   BlobStorageService>();
-builder.Services.AddScoped<ITokenService,         TokenService>();
 
 // ── Repository ────────────────────────────────────────────────────────
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
