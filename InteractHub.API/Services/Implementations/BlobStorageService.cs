@@ -11,8 +11,8 @@ public class BlobStorageService : IBlobStorageService
     public BlobStorageService(IConfiguration config)
     {
         _blobServiceClient = new BlobServiceClient(
-            config["AzureBlobStorage:ConnectionString"]);
-        _containerName = config["AzureBlobStorage:ContainerName"]!;
+            config["BlobStorage:ConnectionString"]);
+        _containerName = config["BlobStorage:ContainerName"]!;
     }
 
     public async Task<string> UploadAsync(IFormFile file, string folder)
