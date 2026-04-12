@@ -1,9 +1,5 @@
-// Auth/TokenServiceTests.cs
 namespace InteractHub.Tests.Auth;
 
-/// <summary>
-/// Unit tests for JWT TokenService
-/// </summary>
 public class TokenServiceTests
 {
     private readonly Mock<IConfiguration> _configMock;
@@ -11,7 +7,6 @@ public class TokenServiceTests
 
     public TokenServiceTests()
     {
-        // Mock IConfiguration to return JWT settings
         _configMock = new Mock<IConfiguration>();
         _configMock.Setup(c => c["JwtSettings:SecretKey"])
                    .Returns("SuperSecretTestKeyThatIsLongEnough123!");
@@ -22,7 +17,6 @@ public class TokenServiceTests
         _configMock.Setup(c => c["JwtSettings:ExpirationInDays"])
                    .Returns("7");
 
-        // Mock UserManager (requires several constructor params)
         var store = new Mock<IUserStore<User>>();
         _userManagerMock = new Mock<UserManager<User>>(
             store.Object, null, null, null, null, null, null, null, null);
@@ -32,7 +26,6 @@ public class TokenServiceTests
     [Fact]
     public async Task GenerateTokenAsync_ValidUser_ReturnsToken()
     {
-        // Arrange
         var user = new User
         {
             Id          = "user-1",
@@ -47,19 +40,16 @@ public class TokenServiceTests
 
         var service = new TokenService(_userManagerMock.Object, _configMock.Object);
 
-        // Act
         var token = await service.GenerateTokenAsync(user);
 
-        // Assert
         token.Should().NotBeNullOrEmpty();
-        token.Split('.').Should().HaveCount(3); // JWT has 3 parts
+        token.Split('.').Should().HaveCount(3);
     }
 
     /// <summary>Token should contain correct user claims</summary>
     [Fact]
     public async Task GenerateTokenAsync_ContainsCorrectClaims()
     {
-        // Arrange
         var user = new User
         {
             Id          = "user-123",
@@ -74,23 +64,23 @@ public class TokenServiceTests
 
         var service = new TokenService(_userManagerMock.Object, _configMock.Object);
 
-        // Act
         var token   = await service.GenerateTokenAsync(user);
-        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var handler = new JwtSecurityTokenHandler();
         var jwt     = handler.ReadJwtToken(token);
 
-        // Assert
         jwt.Claims.Should().Contain(c =>
-            c.Type == "nameid" && c.Value == "user-123");
+            c.Type == "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+            && c.Value == "user-123");
+
         jwt.Claims.Should().Contain(c =>
-            c.Type == "role" && c.Value == "Admin");
+            c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+            && c.Value == "Admin");
     }
 
     /// <summary>Token should expire after configured days</summary>
     [Fact]
     public async Task GenerateTokenAsync_TokenExpiresAfterConfiguredDays()
     {
-        // Arrange
         var user = new User
         {
             Id          = "user-1",
@@ -105,12 +95,10 @@ public class TokenServiceTests
 
         var service = new TokenService(_userManagerMock.Object, _configMock.Object);
 
-        // Act
         var token   = await service.GenerateTokenAsync(user);
-        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var handler = new JwtSecurityTokenHandler();
         var jwt     = handler.ReadJwtToken(token);
 
-        // Assert
         jwt.ValidTo.Should().BeCloseTo(DateTime.UtcNow.AddDays(7), TimeSpan.FromMinutes(1));
     }
 }

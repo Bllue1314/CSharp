@@ -12,3 +12,5 @@ global using InteractHub.API.DTOs.Comments;
 global using InteractHub.API.Services.Implementations;
 global using InteractHub.API.Services.Interfaces;
 global using InteractHub.Tests.Helpers;
+global using Microsoft.Extensions.Configuration;
+global using System.IdentityModel.Tokens.Jwt;

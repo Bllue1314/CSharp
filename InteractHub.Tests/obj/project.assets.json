@@ -4977,6 +4977,7 @@
       "InteractHub.API >= 1.0.0",
       "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 10.0.5",
       "Microsoft.EntityFrameworkCore.InMemory >= 10.0.5",
+      "Microsoft.Extensions.Configuration >= 10.0.5",
       "Microsoft.NET.Test.Sdk >= 17.14.1",
       "Moq >= 4.20.72",
       "coverlet.collector >= 8.0.1",
@@ -5047,6 +5048,10 @@
             "version": "[10.0.5, )"
           },
           "Microsoft.EntityFrameworkCore.InMemory": {
+            "target": "Package",
+            "version": "[10.0.5, )"
+          },
+          "Microsoft.Extensions.Configuration": {
             "target": "Package",
             "version": "[10.0.5, )"
           },
