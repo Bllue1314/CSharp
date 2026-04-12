@@ -84,6 +84,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddAuthorization();
+
 // ── Register TokenService ─────────────────────────────────────────────
 builder.Services.AddScoped<ITokenService, TokenService>();
 
