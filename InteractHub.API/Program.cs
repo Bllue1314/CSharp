@@ -22,10 +22,13 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+        policy.WithOrigins(
+            "http://localhost:5173",
+            "https://interact-hub-client.vercel.app"  // add this
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
 });
 
 builder.Services.AddControllers();
