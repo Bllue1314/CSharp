@@ -20,36 +20,38 @@ public class PostsService : IPostsService
     }
 
     public async Task<List<PostResponseDto>> GetFeedAsync(string userId, int page, int pageSize)
-    {
-        // Get friend IDs
-        var friendIds = await _context.Friendships
-            .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
-                     && f.Status == FriendshipStatus.Accepted)
-            .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
-            .ToListAsync();
+{
+    var friendIds = await _context.Friendships
+        .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
+                 && f.Status == FriendshipStatus.Accepted)
+        .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
+        .ToListAsync();
 
-        // Include own posts
-        friendIds.Add(userId);
+    friendIds.Add(userId);
 
-        return await _context.Posts
-            .Where(p => friendIds.Contains(p.UserId) && !p.IsDeleted)
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(p => MapToDto(p, userId))
-            .ToListAsync();
-    }
+    var posts = await _context.Posts
+        .Where(p => friendIds.Contains(p.UserId) && !p.IsDeleted)
+        .OrderByDescending(p => p.CreatedAt)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .Include(p => p.User)
+        .Include(p => p.Likes)
+        .Include(p => p.Comments.Where(c => !c.IsDeleted)) // ← add this
+        .ToListAsync();
+
+    return posts.Select(p => MapToDto(p, userId)).ToList();
+}
 
     public async Task<PostResponseDto?> GetByIdAsync(int postId, string userId)
-    {
-        var post = await _context.Posts
-            .Include(p => p.User)
-            .Include(p => p.Likes)
-            .Include(p => p.Comments)
-            .FirstOrDefaultAsync(p => p.Id == postId && !p.IsDeleted);
+{
+    var post = await _context.Posts
+        .Include(p => p.User)
+        .Include(p => p.Likes)
+        .Include(p => p.Comments.Where(c => !c.IsDeleted)) // ← add this
+        .FirstOrDefaultAsync(p => p.Id == postId && !p.IsDeleted);
 
-        return post == null ? null : MapToDto(post, userId);
-    }
+    return post == null ? null : MapToDto(post, userId);
+}
 
     public async Task<PostResponseDto> CreateAsync(CreatePostRequestDto dto, string userId)
     {
