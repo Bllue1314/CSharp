@@ -22,26 +22,11 @@ public class FriendsService : IFriendsService
             .Include(f => f.Receiver)
             .ToListAsync();
 
-        return friendships
-            .Select(f => f.SenderId == userId ? f.Receiver : f.Sender)
-            .Select(MapToDto)
-            .ToList();
-    }
-
-    public async Task<List<UserResponseDto>> GetFriendsAsync(string userId)
-    {
-        var friendships = await _context.Friendships
-            .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
-                    && f.Status == FriendshipStatus.Accepted)
-            .Include(f => f.Sender)
-            .Include(f => f.Receiver)
-            .ToListAsync();
-
         return friendships.Select(f => {
             var friend = f.SenderId == userId ? f.Receiver : f.Sender;
             return new UserResponseDto
             {
-                Id          = f.Id.ToString(), // friendship ID for unfriending
+                Id          = f.Id.ToString(),
                 Username    = friend.UserName!,
                 DisplayName = friend.DisplayName,
                 Bio         = friend.Bio,
@@ -51,8 +36,27 @@ public class FriendsService : IFriendsService
         }).ToList();
     }
 
+    public async Task<List<UserResponseDto>> GetPendingRequestsAsync(string userId)
+    {
+        return await _context.Friendships
+            .Where(f => f.ReceiverId == userId && f.Status == FriendshipStatus.Pending)
+            .Include(f => f.Sender)
+            .Select(f => new UserResponseDto
+            {
+                Id          = f.Id.ToString(),
+                Username    = f.Sender.UserName!,
+                DisplayName = f.Sender.DisplayName,
+                Bio         = f.Sender.Bio,
+                AvatarUrl   = f.Sender.AvatarUrl,
+                CreatedAt   = f.Sender.CreatedAt
+            })
+            .ToListAsync();
+    }
+
     public async Task<bool> SendRequestAsync(string senderId, string receiverId)
     {
+        if (senderId == receiverId) return false;
+
         var existing = await _context.Friendships
             .AnyAsync(f => (f.SenderId == senderId && f.ReceiverId == receiverId)
                         || (f.SenderId == receiverId && f.ReceiverId == senderId));
@@ -111,14 +115,4 @@ public class FriendsService : IFriendsService
         await _context.SaveChangesAsync();
         return true;
     }
-
-    private static UserResponseDto MapToDto(User u) => new()
-    {
-        Id          = u.Id,
-        Username    = u.UserName!,
-        DisplayName = u.DisplayName,
-        Bio         = u.Bio,
-        AvatarUrl   = u.AvatarUrl,
-        CreatedAt   = u.CreatedAt
-    };
 }
