@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { toggleLike, deletePost, getComments, addComment } from '../../services/postsService';
+import { toggleLike, deletePost, getComments, addComment, sharePost, reportPost } from '../../services/postsService';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../ui/Avatar';
 import api from '../../services/api';
@@ -44,6 +44,33 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [reported, setReported] = useState(false);
+
+  const handleReport = async () => {
+    const reason = prompt('Reason for report:\n1. Spam\n2. Harassment\n3. HateSpeech\n4. FakeNews\n5. Other\n\nEnter reason:');
+        if (!reason) return;
+        try {
+            await reportPost(post.id, reason);
+            setReported(true);
+            alert('Post reported successfully');
+        } catch {
+            console.error('Failed to report');
+        }
+    };
+
+    const handleShare = async () => {
+        if (!confirm('Share this post to your feed?')) return;
+        try {
+            setSharing(true);
+            await sharePost(post.id, post.content);
+            alert('Post shared!');
+        } catch {
+            console.error('Failed to share');
+        } finally {
+            setSharing(false);
+        }
+    };
 
   const handleLike = async () => {
     setLiked(prev => !prev);
@@ -140,6 +167,16 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
           className="flex items-center gap-1 hover:text-blue-500 transition-colors">
           💬 {commentCount} Comments
         </button>
+        <button onClick={handleShare} disabled={sharing}
+            className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+            🔁 {sharing ? 'Sharing...' : 'Share'}
+        </button>
+        {!reported && user?.userId !== post.userId && (
+            <button onClick={handleReport}
+                className="flex items-center gap-1 hover:text-red-500 transition-colors ml-auto">
+                🚩 Report
+            </button>
+        )}
       </div>
 
       {/* Comments section */}

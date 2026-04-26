@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
-import { sendFriendRequest } from '../../services/friendsService';
-import { useAuth } from '../../context/AuthContext';
+import { sendFriendRequest, getFriends, getPendingRequests } from '../../services/friendsService';
 
 interface FriendUser {
   id: string;
@@ -18,15 +18,65 @@ interface Props {
 }
 
 const FriendCard = ({ user, showAddButton = false }: Props) => {
-  const [requested, setRequested] = useState(false);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser }     = useAuth();
+  const [status, setStatus]       = useState<'none' | 'friends' | 'pending' | 'self'>('none');
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!showAddButton) { setIsLoading(false); return; }
+
+    // Check if this is the current user
+    if (currentUser?.userId === user.id) {
+      setStatus('self');
+      setIsLoading(false);
+      return;
+    }
+
+    const checkStatus = async () => {
+      try {
+        const [friendsRes, requestsRes] = await Promise.all([
+          getFriends(),
+          getPendingRequests()
+        ]);
+
+        const isFriend  = friendsRes.data.some((f: FriendUser) => f.username === user.username);
+        const isPending = requestsRes.data.some((f: FriendUser) => f.username === user.username);
+
+        if (isFriend)       setStatus('friends');
+        else if (isPending) setStatus('pending');
+        else                setStatus('none');
+      } catch {
+        setStatus('none');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkStatus();
+  }, [user.id]);
 
   const handleAdd = async () => {
     try {
       await sendFriendRequest(user.id);
-      setRequested(true);
+      setStatus('pending');
     } catch {
       console.error('Failed to send request');
+    }
+  };
+
+  const renderButton = () => {
+    if (!showAddButton || status === 'self') return null;
+    if (isLoading) return (
+      <Button variant="secondary" disabled>...</Button>
+    );
+
+    switch (status) {
+      case 'friends':
+        return <Button variant="secondary" disabled>Friends ✓</Button>;
+      case 'pending':
+        return <Button variant="secondary" disabled>Requested</Button>;
+      default:
+        return <Button onClick={handleAdd}>Add Friend</Button>;
     }
   };
 
@@ -39,14 +89,7 @@ const FriendCard = ({ user, showAddButton = false }: Props) => {
           <p className="text-sm text-gray-500">@{user.username}</p>
         </div>
       </div>
-      {showAddButton && currentUser?.userId !== user.id && (
-        <Button
-            variant={requested ? 'secondary' : 'primary'}
-            onClick={handleAdd}
-            disabled={requested}>
-            {requested ? 'Requested' : 'Add Friend'}
-        </Button>
-        )}
+      {renderButton()}
     </div>
   );
 };

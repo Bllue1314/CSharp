@@ -37,3 +37,13 @@ export const addComment = async (postId: number, content: string) => {
   const response = await api.post(`/posts/${postId}/comments`, { content });
   return response.data;
 };
+
+export const sharePost = async (postId: number, content: string) => {
+  const response = await api.post('/posts', { content: `🔁 Shared: ${content}` });
+  return response.data;
+};
+
+export const reportPost = async (postId: number, reason: string, description?: string) => {
+  const response = await api.post(`/posts/${postId}/report`, { reason, description });
+  return response.data;
+};

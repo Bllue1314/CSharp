@@ -13,6 +13,7 @@ const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
 const FriendsPage      = lazy(() => import('./pages/FriendsPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const SearchPage       = lazy(() => import('./pages/SearchPage'));
+const StoriesPage = lazy(() => import('./pages/StoriesPage'));
 
 const App = () => (
   <BrowserRouter>
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/friends"       element={<FriendsPage />} />
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/search"        element={<SearchPage />} />
+            <Route path="/stories" element={<StoriesPage />} />
           </Route>
 
           {/* Fallback */}

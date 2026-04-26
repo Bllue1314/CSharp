@@ -53,6 +53,9 @@ const Navbar = () => {
           <Link to={`/profile/${user?.userId}`}>
             <Avatar src={user?.avatarUrl} username={user?.username ?? 'U'} size="sm" />
           </Link>
+          <Link to="/stories" className="text-gray-600 hover:text-blue-500 text-sm font-medium">
+            Stories
+          </Link>
           <button onClick={handleLogout}
             className="text-sm text-red-400 hover:text-red-600">
             Logout
@@ -89,6 +92,9 @@ const Navbar = () => {
           <Link to={`/profile/${user?.userId}`} onClick={() => setMenuOpen(false)}
             className="text-gray-700 hover:text-blue-500 font-medium">
             Profile
+          </Link>
+          <Link to="/stories" className="text-gray-600 hover:text-blue-500 text-sm font-medium">
+            Stories
           </Link>
           <button onClick={handleLogout} className="text-red-400 text-left font-medium">
             Logout
