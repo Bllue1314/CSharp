@@ -33,13 +33,20 @@ public class FriendsService : IFriendsService
         return await _context.Friendships
             .Where(f => f.ReceiverId == userId && f.Status == FriendshipStatus.Pending)
             .Include(f => f.Sender)
-            .Select(f => MapToDto(f.Sender))
+            .Select(f => new UserResponseDto
+            {
+                Id          = f.Id.ToString(), // friendship ID for accepting
+                Username    = f.Sender.UserName!,
+                DisplayName = f.Sender.DisplayName,
+                Bio         = f.Sender.Bio,
+                AvatarUrl   = f.Sender.AvatarUrl,
+                CreatedAt   = f.Sender.CreatedAt
+            })
             .ToListAsync();
     }
 
     public async Task<bool> SendRequestAsync(string senderId, string receiverId)
     {
-        // Check if request already exists
         var existing = await _context.Friendships
             .AnyAsync(f => (f.SenderId == senderId && f.ReceiverId == receiverId)
                         || (f.SenderId == receiverId && f.ReceiverId == senderId));

@@ -33,14 +33,14 @@ interface PostCardProps {
 }
 
 const PostCard = ({ post, onDelete }: PostCardProps) => {
-  const { user }                      = useAuth();
-  const [liked, setLiked]             = useState(post.isLikedByCurrentUser);
-  const [likeCount, setLikeCount]     = useState(post.likeCount);
-  const [isDeleting, setIsDeleting]   = useState(false);
+  const { user }                        = useAuth();
+  const [liked, setLiked]               = useState(post.isLikedByCurrentUser);
+  const [likeCount, setLikeCount]       = useState(post.likeCount);
+  const [isDeleting, setIsDeleting]     = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments]       = useState<Comment[]>([]);
-  const [loadingComments, setLoadingComments] = useState(false);
-  const [newComment, setNewComment]   = useState('');
+  const [comments, setComments]         = useState<Comment[]>([]);
+  const [loadingComments, setLoadingComments]   = useState(false);
+  const [newComment, setNewComment]     = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [commentsLoaded, setCommentsLoaded] = useState(false);
@@ -70,36 +70,36 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
   };
 
   const handleToggleComments = async () => {
-  if (!showComments && !commentsLoaded) {
-    try {
-      setLoadingComments(true);
-      const res = await getComments(post.id);
-      setComments(res.data);
-      setCommentCount(res.data.length); // ← update count from actual data
-      setCommentsLoaded(true);
-    } catch {
-      console.error('Failed to load comments');
-    } finally {
-      setLoadingComments(false);
+    if (!showComments && !commentsLoaded) {
+      try {
+        setLoadingComments(true);
+        const res = await getComments(post.id);
+        setComments(res.data);
+        setCommentCount(res.data.length);
+        setCommentsLoaded(true);
+      } catch {
+        console.error('Failed to load comments');
+      } finally {
+        setLoadingComments(false);
+      }
     }
-  }
-  setShowComments(prev => !prev);
-};
+    setShowComments(prev => !prev);
+  };
 
   const handleAddComment = async () => {
-  if (!newComment.trim()) return;
-  try {
-    setSubmittingComment(true);
-    const res = await addComment(post.id, newComment);
-    setComments(prev => [...prev, res.data]);
-    setCommentCount(prev => prev + 1); // ← increment from real count
-    setNewComment('');
-  } catch {
-    console.error('Failed to add comment');
-  } finally {
-    setSubmittingComment(false);
-  }
-};
+    if (!newComment.trim()) return;
+    try {
+      setSubmittingComment(true);
+      const res = await addComment(post.id, newComment);
+      setComments(prev => [...prev, res.data]);
+      setCommentCount(prev => prev + 1);
+      setNewComment('');
+    } catch {
+      console.error('Failed to add comment');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl shadow p-4 flex flex-col gap-3">
@@ -170,32 +170,36 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
             <p className="text-center text-gray-400 text-sm">Loading comments...</p>
           )}
 
-        {comments.map(comment => (
-        <div key={comment.id} className="flex gap-2">
-            <Avatar src={comment.avatarUrl} username={comment.username} size="sm" />
-            <div className="bg-gray-100 rounded-xl px-3 py-2 flex-1">
-            <div className="flex justify-between items-center">
-                <p className="text-xs font-semibold text-gray-700">{comment.username}</p>
-                {user?.userId === comment.userId && (
-                <button
-                    onClick={async () => {
-                    try {
-                        await api.delete(`/posts/${post.id}/comments/${comment.id}`);
-                        setComments(prev => prev.filter(c => c.id !== comment.id));
-                        setCommentCount(prev => prev - 1);
-                    } catch {
-                        console.error('Failed to delete comment');
-                    }
-                    }}
-                    className="text-red-400 hover:text-red-600 text-xs">
-                    Delete
-                </button>
-                )}
+          {comments.map(comment => (
+            <div key={comment.id} className="flex gap-2">
+              <Avatar src={comment.avatarUrl} username={comment.username} size="sm" />
+              <div className="bg-gray-100 rounded-xl px-3 py-2 flex-1">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-semibold text-gray-700">{comment.username}</p>
+                  {user?.userId === comment.userId && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          console.log('Deleting comment:', comment.id, 'from post:', post.id);
+                          const res = await api.delete(`/posts/${post.id}/comments/${comment.id}`);
+                          console.log('Delete response:', res.status);
+                          setComments(prev => prev.filter(c => c.id !== comment.id));
+                          setCommentCount(prev => prev - 1);
+                        } catch (err: any) {
+                          console.error('Failed to delete comment:',
+                            err.response?.status,
+                            err.response?.data);
+                        }
+                      }}
+                      className="text-red-400 hover:text-red-600 text-xs">
+                      Delete
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">{comment.content}</p>
+              </div>
             </div>
-            <p className="text-sm text-gray-600">{comment.content}</p>
-            </div>
-        </div>
-        ))}
+          ))}
 
           {!loadingComments && comments.length === 0 && (
             <p className="text-center text-gray-400 text-sm">
