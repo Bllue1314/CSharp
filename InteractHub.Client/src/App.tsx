@@ -2,35 +2,40 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
+import { lazy, Suspense } from 'react';
+import Spinner from './components/ui/Spinner';
 
-import LoginPage        from './pages/auth/LoginPage';
-import RegisterPage     from './pages/auth/RegisterPage';
-import HomePage         from './pages/HomePage';
-import ProfilePage      from './pages/ProfilePage';
-import FriendsPage      from './pages/FriendsPage';
-import NotificationsPage from './pages/NotificationsPage';
-import SearchPage       from './pages/SearchPage';
+// Lazy load all pages
+const LoginPage        = lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage     = lazy(() => import('./pages/auth/RegisterPage'));
+const HomePage         = lazy(() => import('./pages/HomePage'));
+const ProfilePage      = lazy(() => import('./pages/ProfilePage'));
+const FriendsPage      = lazy(() => import('./pages/FriendsPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const SearchPage       = lazy(() => import('./pages/SearchPage'));
 
 const App = () => (
   <BrowserRouter>
     <AuthProvider>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/login"    element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+      <Suspense fallback={<Spinner />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/login"    element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        {/* Protected routes */}
-        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-          <Route path="/"                  element={<HomePage />} />
-          <Route path="/profile/:id"       element={<ProfilePage />} />
-          <Route path="/friends"           element={<FriendsPage />} />
-          <Route path="/notifications"     element={<NotificationsPage />} />
-          <Route path="/search"            element={<SearchPage />} />
-        </Route>
+          {/* Protected routes */}
+          <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+            <Route path="/"              element={<HomePage />} />
+            <Route path="/profile/:id"   element={<ProfilePage />} />
+            <Route path="/friends"       element={<FriendsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/search"        element={<SearchPage />} />
+          </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </AuthProvider>
   </BrowserRouter>
 );

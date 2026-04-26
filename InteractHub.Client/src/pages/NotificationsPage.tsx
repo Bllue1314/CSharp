@@ -3,6 +3,7 @@ import { getNotifications, markAllAsRead } from '../services/notificationsServic
 import NotificationItem from '../components/notifications/NotificationItem';
 import Spinner from '../components/ui/Spinner';
 import Button from '../components/ui/Button';
+import { useSignalR } from '../hooks/useSignalR';
 
 interface Notification {
   id: number;
@@ -16,6 +17,11 @@ interface Notification {
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading]         = useState(true);
+
+  // Real-time notifications via SignalR
+  useSignalR((newNotification) => {
+    setNotifications(prev => [newNotification, ...prev]);
+  });
 
   useEffect(() => {
     const load = async () => {

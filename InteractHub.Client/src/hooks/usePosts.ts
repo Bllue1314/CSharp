@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getFeed } from '../services/postsService';
 
 interface Post {
@@ -15,18 +15,34 @@ interface Post {
   isLikedByCurrentUser: boolean;
 }
 
+// Simple module-level cache
+const postsCache = new Map<number, Post[]>();
+
 export const usePosts = () => {
-  const [posts, setPosts]         = useState<Post[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [posts, setPosts]         = useState<Post[]>(postsCache.get(1) ?? []);
+  const [isLoading, setIsLoading] = useState(postsCache.size === 0);
   const [error, setError]         = useState<string | null>(null);
   const [page, setPage]           = useState(1);
   const [hasMore, setHasMore]     = useState(true);
+  const isFetching                = useRef(false);
 
   const loadPosts = async (pageNum = 1) => {
+    if (isFetching.current) return;
+
+    // Return cached data if available
+    if (pageNum === 1 && postsCache.has(1)) {
+      setPosts(postsCache.get(1)!);
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      isFetching.current = true;
       setIsLoading(true);
       const res = await getFeed(pageNum);
+
       if (pageNum === 1) {
+        postsCache.set(1, res.data);  // cache first page
         setPosts(res.data);
       } else {
         setPosts(prev => [...prev, ...res.data]);
@@ -36,6 +52,7 @@ export const usePosts = () => {
       setError('Failed to load posts');
     } finally {
       setIsLoading(false);
+      isFetching.current = false;
     }
   };
 
@@ -47,8 +64,15 @@ export const usePosts = () => {
     loadPosts(nextPage);
   };
 
-  const addPost  = (post: Post) => setPosts(prev => [post, ...prev]);
-  const removePost = (id: number) => setPosts(prev => prev.filter(p => p.id !== id));
+  const addPost = (post: Post) => {
+    postsCache.delete(1); // invalidate cache
+    setPosts(prev => [post, ...prev]);
+  };
+
+  const removePost = (id: number) => {
+    postsCache.delete(1); // invalidate cache
+    setPosts(prev => prev.filter(p => p.id !== id));
+  };
 
   return { posts, isLoading, error, hasMore, loadMore, addPost, removePost };
 };

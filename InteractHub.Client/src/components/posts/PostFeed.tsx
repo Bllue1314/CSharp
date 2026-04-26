@@ -1,7 +1,7 @@
 import { usePosts } from '../../hooks/usePosts';
 import PostCard from './PostCard';
 import CreatePostForm from './CreatePostForm';
-import Spinner from '../ui/Spinner';
+import { PostSkeleton } from '../ui/Skeleton';
 import Button from '../ui/Button';
 
 const PostFeed = () => {
@@ -13,11 +13,18 @@ const PostFeed = () => {
 
       {error && <p className="text-red-500 text-center">{error}</p>}
 
+      {/* Show skeletons while loading */}
+      {isLoading && posts.length === 0 && (
+        <>
+          <PostSkeleton />
+          <PostSkeleton />
+          <PostSkeleton />
+        </>
+      )}
+
       {posts.map(post => (
         <PostCard key={post.id} post={post} onDelete={removePost} />
       ))}
-
-      {isLoading && <Spinner />}
 
       {!isLoading && hasMore && (
         <Button variant="secondary" onClick={loadMore} className="w-full">
