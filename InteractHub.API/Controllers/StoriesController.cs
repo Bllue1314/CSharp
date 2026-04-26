@@ -40,6 +40,6 @@ public class StoriesController : ControllerBase
         if (!success)
             return NotFound(ApiResponse<object>.Fail("Story not found"));
 
-        return Ok(ApiResponse<object>.Ok(null, "Story deleted"));
+        return Ok(ApiResponse<object>.Ok(null!, "Story deleted"));
     }
 }

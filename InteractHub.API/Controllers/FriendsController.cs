@@ -40,7 +40,7 @@ public class FriendsController : ControllerBase
         if (!success)
             return BadRequest(ApiResponse<object>.Fail("Could not send friend request"));
 
-        return Ok(ApiResponse<object>.Ok(null, "Friend request sent"));
+        return Ok(ApiResponse<object>.Ok(null!, "Friend request sent"));
     }
 
     /// <summary>Accept a friend request</summary>
@@ -64,6 +64,6 @@ public class FriendsController : ControllerBase
         if (!success)
             return NotFound(ApiResponse<object>.Fail("Friendship not found"));
 
-        return Ok(ApiResponse<object>.Ok(null, "Removed successfully"));
+        return Ok(ApiResponse<object>.Ok(null!, "Removed successfully"));
     }
 }

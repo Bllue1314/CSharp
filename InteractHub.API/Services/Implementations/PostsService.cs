@@ -206,17 +206,6 @@ public class PostsService : IPostsService
         IsLikedByCurrentUser = p.Likes?.Any(l => l.UserId == currentUserId) ?? false
     };
 
-    [HttpDelete("{postId}/comments/{commentId}")]
-    public async Task<IActionResult> DeleteComment(int postId, int commentId)
-    {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var success = await _postsService.DeleteCommentAsync(commentId, userId);
-        if (!success)
-            return NotFound(ApiResponse<object>.Fail("Comment not found"));
-
-        return Ok(ApiResponse<object>.Ok(null, "Comment deleted"));
-    }
-
     public async Task<bool> DeleteCommentAsync(int commentId, string userId)
     {
         var comment = await _context.Comments

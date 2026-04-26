@@ -31,7 +31,7 @@ public class NotificationsController : ControllerBase
         if (!success)
             return NotFound(ApiResponse<object>.Fail("Notification not found"));
 
-        return Ok(ApiResponse<object>.Ok(null, "Marked as read"));
+        return Ok(ApiResponse<object>.Ok(null!, "Marked as read"));
     }
 
     /// <summary>Mark all notifications as read</summary>
@@ -40,6 +40,6 @@ public class NotificationsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         await _notificationsService.MarkAllAsReadAsync(userId);
-        return Ok(ApiResponse<object>.Ok(null, "All notifications marked as read"));
+        return Ok(ApiResponse<object>.Ok(null!, "All notifications marked as read"));
     }
 }

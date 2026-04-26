@@ -80,7 +80,7 @@ public class PostsController : ControllerBase
         if (!success)
             return NotFound(ApiResponse<object>.Fail("Post not found"));
 
-        return Ok(ApiResponse<object>.Ok(null, "Post deleted"));
+        return Ok(ApiResponse<object>.Ok(null!, "Post deleted"));
     }
 
     /// <summary>Like or unlike a post</summary>
@@ -90,7 +90,7 @@ public class PostsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var liked = await _postsService.ToggleLikeAsync(id, userId);
-        return Ok(ApiResponse<object>.Ok(null, liked ? "Post liked" : "Post unliked"));
+        return Ok(ApiResponse<object>.Ok(null!, liked ? "Post liked" : "Post unliked"));
     }
 
     /// <summary>Get comments for a post</summary>
@@ -115,5 +115,16 @@ public class PostsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var comment = await _postsService.AddCommentAsync(id, dto, userId);
         return StatusCode(201, ApiResponse<CommentResponseDto>.Ok(comment, "Comment added"));
+    }
+
+    [HttpDelete("{id}/comments/{commentId}")]
+    public async Task<IActionResult> DeleteComment(int id, int commentId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var success = await _postsService.DeleteCommentAsync(commentId, userId);
+        if (!success)
+            return NotFound(ApiResponse<object>.Fail("Comment not found"));
+
+        return Ok(ApiResponse<object>.Ok(null!, "Comment deleted"));
     }
 }
