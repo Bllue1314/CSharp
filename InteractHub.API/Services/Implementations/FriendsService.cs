@@ -28,21 +28,27 @@ public class FriendsService : IFriendsService
             .ToList();
     }
 
-    public async Task<List<UserResponseDto>> GetPendingRequestsAsync(string userId)
+    public async Task<List<UserResponseDto>> GetFriendsAsync(string userId)
     {
-        return await _context.Friendships
-            .Where(f => f.ReceiverId == userId && f.Status == FriendshipStatus.Pending)
+        var friendships = await _context.Friendships
+            .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
+                    && f.Status == FriendshipStatus.Accepted)
             .Include(f => f.Sender)
-            .Select(f => new UserResponseDto
-            {
-                Id          = f.Id.ToString(), // friendship ID for accepting
-                Username    = f.Sender.UserName!,
-                DisplayName = f.Sender.DisplayName,
-                Bio         = f.Sender.Bio,
-                AvatarUrl   = f.Sender.AvatarUrl,
-                CreatedAt   = f.Sender.CreatedAt
-            })
+            .Include(f => f.Receiver)
             .ToListAsync();
+
+        return friendships.Select(f => {
+            var friend = f.SenderId == userId ? f.Receiver : f.Sender;
+            return new UserResponseDto
+            {
+                Id          = f.Id.ToString(), // friendship ID for unfriending
+                Username    = friend.UserName!,
+                DisplayName = friend.DisplayName,
+                Bio         = friend.Bio,
+                AvatarUrl   = friend.AvatarUrl,
+                CreatedAt   = friend.CreatedAt
+            };
+        }).ToList();
     }
 
     public async Task<bool> SendRequestAsync(string senderId, string receiverId)

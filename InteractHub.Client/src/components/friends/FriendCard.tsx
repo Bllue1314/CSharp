@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
 import { sendFriendRequest } from '../../services/friendsService';
+import { useAuth } from '../../context/AuthContext';
 
 interface FriendUser {
   id: string;
@@ -18,6 +19,7 @@ interface Props {
 
 const FriendCard = ({ user, showAddButton = false }: Props) => {
   const [requested, setRequested] = useState(false);
+  const { user: currentUser } = useAuth();
 
   const handleAdd = async () => {
     try {
@@ -37,14 +39,14 @@ const FriendCard = ({ user, showAddButton = false }: Props) => {
           <p className="text-sm text-gray-500">@{user.username}</p>
         </div>
       </div>
-      {showAddButton && (
+      {showAddButton && currentUser?.userId !== user.id && (
         <Button
-          variant={requested ? 'secondary' : 'primary'}
-          onClick={handleAdd}
-          disabled={requested}>
-          {requested ? 'Requested' : 'Add Friend'}
+            variant={requested ? 'secondary' : 'primary'}
+            onClick={handleAdd}
+            disabled={requested}>
+            {requested ? 'Requested' : 'Add Friend'}
         </Button>
-      )}
+        )}
     </div>
   );
 };
