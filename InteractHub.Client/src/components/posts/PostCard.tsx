@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toggleLike, deletePost, getComments, addComment } from '../../services/postsService';
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../ui/Avatar';
+import api from '../../services/api';
 
 interface Post {
   id: number;
@@ -168,15 +169,33 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
           {loadingComments && (
             <p className="text-center text-gray-400 text-sm">Loading comments...</p>
           )}
-          {comments.map(comment => (
-            <div key={comment.id} className="flex gap-2">
-              <Avatar src={comment.avatarUrl} username={comment.username} size="sm" />
-              <div className="bg-gray-100 rounded-xl px-3 py-2 flex-1">
+
+        {comments.map(comment => (
+        <div key={comment.id} className="flex gap-2">
+            <Avatar src={comment.avatarUrl} username={comment.username} size="sm" />
+            <div className="bg-gray-100 rounded-xl px-3 py-2 flex-1">
+            <div className="flex justify-between items-center">
                 <p className="text-xs font-semibold text-gray-700">{comment.username}</p>
-                <p className="text-sm text-gray-600">{comment.content}</p>
-              </div>
+                {user?.userId === comment.userId && (
+                <button
+                    onClick={async () => {
+                    try {
+                        await api.delete(`/posts/${post.id}/comments/${comment.id}`);
+                        setComments(prev => prev.filter(c => c.id !== comment.id));
+                        setCommentCount(prev => prev - 1);
+                    } catch {
+                        console.error('Failed to delete comment');
+                    }
+                    }}
+                    className="text-red-400 hover:text-red-600 text-xs">
+                    Delete
+                </button>
+                )}
             </div>
-          ))}
+            <p className="text-sm text-gray-600">{comment.content}</p>
+            </div>
+        </div>
+        ))}
 
           {!loadingComments && comments.length === 0 && (
             <p className="text-center text-gray-400 text-sm">
