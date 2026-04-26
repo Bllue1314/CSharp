@@ -63,7 +63,7 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
         if (!confirm('Share this post to your feed?')) return;
         try {
             setSharing(true);
-            await sharePost(post.id, post.content);
+            await sharePost(post.content);
             alert('Post shared!');
         } catch {
             console.error('Failed to share');

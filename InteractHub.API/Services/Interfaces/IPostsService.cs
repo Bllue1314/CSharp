@@ -11,4 +11,6 @@ public interface IPostsService
     Task<List<CommentResponseDto>> GetCommentsAsync(int postId);
     Task<CommentResponseDto> AddCommentAsync(int postId, CreateCommentRequestDto dto, string userId);
     Task<bool> DeleteCommentAsync(int commentId, string userId);
+    Task<bool> ReportPostAsync(int postId, ReportPostDto dto, string userId);
+    Task<List<string>> GetTrendingHashtagsAsync();
 }

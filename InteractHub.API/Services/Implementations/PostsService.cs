@@ -217,4 +217,35 @@ public class PostsService : IPostsService
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> ReportPostAsync(int postId, ReportPostDto dto, string userId)
+    {
+        var post = await _context.Posts.FindAsync(postId);
+        if (post == null) return false;
+
+        if (!Enum.TryParse<ReportReason>(dto.Reason, true, out var reason))
+            reason = ReportReason.Other;
+
+        await _context.PostReports.AddAsync(new PostReport
+        {
+            PostId      = postId,
+            UserId      = userId,
+            Reason      = reason,
+            Description = dto.Description,
+            CreatedAt   = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<string>> GetTrendingHashtagsAsync()
+    {
+        return await _context.PostHashtags
+            .GroupBy(ph => ph.Hashtag.Tag)
+            .OrderByDescending(g => g.Count())
+            .Take(10)
+            .Select(g => g.Key)
+            .ToListAsync();
+    }
 }

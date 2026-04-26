@@ -127,4 +127,25 @@ public class PostsController : ControllerBase
 
         return Ok(ApiResponse<object>.Ok(null!, "Comment deleted"));
     }
+
+    /// <summary>Report a post</summary>
+    [HttpPost("{id}/report")]
+    public async Task<IActionResult> ReportPost(int id, [FromBody] ReportPostDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var success = await _postsService.ReportPostAsync(id, dto, userId);
+        if (!success)
+            return NotFound(ApiResponse<object>.Fail("Post not found"));
+
+        return Ok(ApiResponse<object>.Ok(null!, "Post reported"));
+    }
+
+    /// <summary>Get trending hashtags</summary>
+    [HttpGet("trending")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetTrending()
+    {
+        var trending = await _postsService.GetTrendingHashtagsAsync();
+        return Ok(ApiResponse<List<string>>.Ok(trending));
+    }
 }
