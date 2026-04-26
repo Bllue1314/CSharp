@@ -1,10 +1,12 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { register as registerUser } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import { useState } from 'react';
+import PasswordStrength from '../../components/ui/PasswordStrength';
+import Alert from '../../components/ui/Alert';
 
 interface FormData {
   username: string;
@@ -15,24 +17,28 @@ interface FormData {
 }
 
 const RegisterPage = () => {
-  const { login }         = useAuth();
-  const navigate          = useNavigate();
-  const [error, setError] = useState<string | null>(null);
+  const { login }           = useAuth();
+  const navigate            = useNavigate();
+  const [error, setError]   = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<FormData>();
-  const password = watch('password');
+  const password = watch('password', '');
 
   const onSubmit = async (data: FormData) => {
     try {
       setError(null);
       const res = await registerUser({
-        username: data.username,
-        email: data.email,
-        password: data.password,
+        username:    data.username,
+        email:       data.email,
+        password:    data.password,
         displayName: data.displayName
       });
-      login(res.data.token, res.data);
-      navigate('/');
+      setSuccess('Account created successfully!');
+      setTimeout(() => {
+        login(res.data.token, res.data);
+        navigate('/');
+      }, 1000);
     } catch {
       setError('Registration failed. Email or username may already be taken.');
     }
@@ -46,13 +52,10 @@ const RegisterPage = () => {
         </h1>
         <h2 className="text-xl font-semibold text-gray-800 mb-4">Create Account</h2>
 
-        {error && (
-          <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm mb-4">
-            {error}
-          </div>
-        )}
+        {error   && <Alert type="error"   message={error}   />}
+        {success && <Alert type="success" message={success} />}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 mt-4">
           <Input
             label="Display Name"
             placeholder="John Doe"
@@ -76,30 +79,33 @@ const RegisterPage = () => {
             error={errors.email?.message}
             {...register('email', {
               required: 'Email is required',
-              pattern: { value: /^\S+@\S+$/i, message: 'Invalid email' }
+              pattern: { value: /^\S+@\S+$/i, message: 'Invalid email format' }
             })}
           />
-          <Input
-            label="Password"
-            type="password"
-            placeholder="••••••••"
-            error={errors.password?.message}
-            {...register('password', {
-              required: 'Password is required',
-              minLength: { value: 8, message: 'Min 8 characters' },
-              pattern: {
-                value: /^(?=.*[0-9])(?=.*[A-Z])/,
-                message: 'Must contain uppercase and number'
-              }
-            })}
-          />
+          <div className="flex flex-col gap-1">
+            <Input
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              error={errors.password?.message}
+              {...register('password', {
+                required: 'Password is required',
+                minLength: { value: 8, message: 'Min 8 characters' },
+                pattern: {
+                  value: /^(?=.*[0-9])(?=.*[A-Z])/,
+                  message: 'Must contain uppercase letter and number'
+                }
+              })}
+            />
+            <PasswordStrength password={password} />
+          </div>
           <Input
             label="Confirm Password"
             type="password"
             placeholder="••••••••"
             error={errors.confirmPassword?.message}
             {...register('confirmPassword', {
-              required: 'Please confirm password',
+              required: 'Please confirm your password',
               validate: value => value === password || 'Passwords do not match'
             })}
           />

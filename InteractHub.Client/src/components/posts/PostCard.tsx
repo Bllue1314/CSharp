@@ -28,15 +28,17 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
   const [likeCount, setLikeCount]   = useState(post.likeCount);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleLike = async () => {
-    try {
-      await toggleLike(post.id);
-      setLiked(prev => !prev);
-      setLikeCount(prev => liked ? prev - 1 : prev + 1);
-    } catch {
-      console.error('Failed to toggle like');
-    }
-  };
+
+const handleLike = async () => {
+  setLiked(prev => !prev);           
+  setLikeCount(prev => liked ? prev - 1 : prev + 1);  
+  try {
+    await toggleLike(post.id);      
+  } catch {
+    setLiked(prev => !prev);
+    setLikeCount(prev => liked ? prev + 1 : prev - 1);
+  }
+};
 
   const handleDelete = async () => {
     if (!confirm('Delete this post?')) return;
