@@ -9,5 +9,10 @@ export default defineConfig({
   ],
   optimizeDeps: {
     include: ['@microsoft/signalr']
+  },
+  build: {
+    commonjsOptions: {
+      include: [/signalr/, /node_modules/]
+    }
   }
 })

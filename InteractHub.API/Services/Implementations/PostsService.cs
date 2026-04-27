@@ -249,19 +249,26 @@ public class PostsService : IPostsService
             .ToListAsync();
     }
 
-    public async Task<List<PostResponseDto>> GetUserPostsAsync(
-        string userId, string currentUserId, int page, int pageSize)
+    public async Task<PostResponseDto> CreateAsync(CreatePostRequestDto dto, string userId)
     {
-        var posts = await _context.Posts
-            .Where(p => p.UserId == userId && !p.IsDeleted)
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Include(p => p.User)
-            .Include(p => p.Likes)
-            .Include(p => p.Comments.Where(c => !c.IsDeleted))
-            .ToListAsync();
+        string? imageUrl = null;
 
-        return posts.Select(p => MapToDto(p, currentUserId)).ToList();
+        if (dto.Image != null)
+            imageUrl = await _blobStorage.UploadAsync(dto.Image, "posts");
+        else if (!string.IsNullOrEmpty(dto.SharedImageUrl))
+            imageUrl = dto.SharedImageUrl; // ← use shared image URL directly
+
+        var post = new Post
+        {
+            Content   = dto.Content,
+            ImageUrl  = imageUrl,
+            UserId    = userId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _context.Posts.AddAsync(post);
+        await _context.SaveChangesAsync();
+        await _context.Entry(post).Reference(p => p.User).LoadAsync();
+        return MapToDto(post, userId);
     }
 }

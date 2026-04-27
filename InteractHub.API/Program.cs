@@ -24,7 +24,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("ReactApp", policy =>
         policy.WithOrigins(
             "http://localhost:5173",
-            "https://interact-hub-client.vercel.app"  // add this
+            "https://interact-hub-client.vercel.app"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()

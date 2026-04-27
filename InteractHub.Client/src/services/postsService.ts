@@ -38,8 +38,13 @@ export const addComment = async (postId: number, content: string) => {
   return response.data;
 };
 
-export const sharePost = async (content: string) => {
-  const response = await api.post('/posts', { content: `🔁 Shared: ${content}` });
+export const sharePost = async (content: string, imageUrl?: string) => {
+  const formData = new FormData();
+  formData.append('content', `🔁 Shared: ${content}`);
+  if (imageUrl) {
+    formData.append('sharedImageUrl', imageUrl);
+  }
+  const response = await api.post('/posts', formData);
   return response.data;
 };
 

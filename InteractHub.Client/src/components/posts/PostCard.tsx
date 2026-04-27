@@ -59,18 +59,20 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
         }
     };
 
-    const handleShare = async () => {
-        if (!confirm('Share this post to your feed?')) return;
-        try {
-            setSharing(true);
-            await sharePost(post.content);
-            alert('Post shared!');
-        } catch {
-            console.error('Failed to share');
-        } finally {
-            setSharing(false);
-        }
-    };
+  const handleShare = async () => {
+    if (!confirm('Share this post to your feed?')) return;
+    try {
+        setSharing(true);
+        await sharePost(post.content, post.imageUrl);
+        alert('Post shared! Refreshing feed...');
+        window.location.reload();
+    } catch (err: any) {
+        console.error('Failed to share:', err.response?.status, err.response?.data);
+        alert('Failed to share post');
+    } finally {
+        setSharing(false);
+    }
+  };
 
   const handleLike = async () => {
     setLiked(prev => !prev);
@@ -168,7 +170,7 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
           💬 {commentCount} Comments
         </button>
         <button onClick={handleShare} disabled={sharing}
-            className="flex items-center gap-1 hover:text-blue-500 transition-colors">
+            className="flex items-center gap-1 hover:text-green-500 transition-colors">
             🔁 {sharing ? 'Sharing...' : 'Share'}
         </button>
         {!reported && user?.userId !== post.userId && (
