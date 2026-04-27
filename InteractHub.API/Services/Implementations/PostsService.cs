@@ -20,44 +20,47 @@ public class PostsService : IPostsService
     }
 
     public async Task<List<PostResponseDto>> GetFeedAsync(string userId, int page, int pageSize)
-{
-    var friendIds = await _context.Friendships
-        .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
-                 && f.Status == FriendshipStatus.Accepted)
-        .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
-        .ToListAsync();
+    {
+        var friendIds = await _context.Friendships
+            .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
+                     && f.Status == FriendshipStatus.Accepted)
+            .Select(f => f.SenderId == userId ? f.ReceiverId : f.SenderId)
+            .ToListAsync();
 
-    friendIds.Add(userId);
+        friendIds.Add(userId);
 
-    var posts = await _context.Posts
-        .Where(p => friendIds.Contains(p.UserId) && !p.IsDeleted)
-        .OrderByDescending(p => p.CreatedAt)
-        .Skip((page - 1) * pageSize)
-        .Take(pageSize)
-        .Include(p => p.User)
-        .Include(p => p.Likes)
-        .Include(p => p.Comments.Where(c => !c.IsDeleted)) // ← add this
-        .ToListAsync();
+        var posts = await _context.Posts
+            .Where(p => friendIds.Contains(p.UserId) && !p.IsDeleted)
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Include(p => p.User)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments.Where(c => !c.IsDeleted))
+            .ToListAsync();
 
-    return posts.Select(p => MapToDto(p, userId)).ToList();
-}
+        return posts.Select(p => MapToDto(p, userId)).ToList();
+    }
 
     public async Task<PostResponseDto?> GetByIdAsync(int postId, string userId)
-{
-    var post = await _context.Posts
-        .Include(p => p.User)
-        .Include(p => p.Likes)
-        .Include(p => p.Comments.Where(c => !c.IsDeleted)) // ← add this
-        .FirstOrDefaultAsync(p => p.Id == postId && !p.IsDeleted);
+    {
+        var post = await _context.Posts
+            .Include(p => p.User)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments.Where(c => !c.IsDeleted))
+            .FirstOrDefaultAsync(p => p.Id == postId && !p.IsDeleted);
 
-    return post == null ? null : MapToDto(post, userId);
-}
+        return post == null ? null : MapToDto(post, userId);
+    }
 
     public async Task<PostResponseDto> CreateAsync(CreatePostRequestDto dto, string userId)
     {
         string? imageUrl = null;
+
         if (dto.Image != null)
             imageUrl = await _blobStorage.UploadAsync(dto.Image, "posts");
+        else if (!string.IsNullOrEmpty(dto.SharedImageUrl))
+            imageUrl = dto.SharedImageUrl;
 
         var post = new Post
         {
@@ -69,8 +72,6 @@ public class PostsService : IPostsService
 
         await _context.Posts.AddAsync(post);
         await _context.SaveChangesAsync();
-
-        // Reload with user info
         await _context.Entry(post).Reference(p => p.User).LoadAsync();
         return MapToDto(post, userId);
     }
@@ -97,7 +98,6 @@ public class PostsService : IPostsService
 
         if (post == null || post.UserId != userId) return false;
 
-        // Soft delete — keeps data in DB but hides it
         post.IsDeleted = true;
         await _context.SaveChangesAsync();
         return true;
@@ -110,13 +110,11 @@ public class PostsService : IPostsService
 
         if (existing != null)
         {
-            // Unlike
             _context.Likes.Remove(existing);
             await _context.SaveChangesAsync();
             return false;
         }
 
-        // Like
         await _context.Likes.AddAsync(new Like
         {
             PostId    = postId,
@@ -125,7 +123,6 @@ public class PostsService : IPostsService
         });
         await _context.SaveChangesAsync();
 
-        // Notify post owner (but not if you liked your own post)
         var post = await _context.Posts.FindAsync(postId);
         if (post != null && post.UserId != userId)
             await _notifications.CreateAsync(
@@ -170,7 +167,6 @@ public class PostsService : IPostsService
         await _context.SaveChangesAsync();
         await _context.Entry(comment).Reference(c => c.User).LoadAsync();
 
-        // Notify post owner
         var post = await _context.Posts.FindAsync(postId);
         if (post != null && post.UserId != userId)
             await _notifications.CreateAsync(
@@ -189,22 +185,6 @@ public class PostsService : IPostsService
             AvatarUrl = comment.User.AvatarUrl
         };
     }
-
-    // ── Private mapper ────────────────────────────────────────────────
-    private static PostResponseDto MapToDto(Post p, string currentUserId) => new()
-    {
-        Id                   = p.Id,
-        Content              = p.Content,
-        ImageUrl             = p.ImageUrl,
-        CreatedAt            = p.CreatedAt,
-        UserId               = p.UserId,
-        Username             = p.User?.UserName ?? "",
-        DisplayName          = p.User?.DisplayName ?? "",
-        AvatarUrl            = p.User?.AvatarUrl,
-        LikeCount            = p.Likes?.Count ?? 0,
-        CommentCount         = p.Comments?.Count ?? 0,
-        IsLikedByCurrentUser = p.Likes?.Any(l => l.UserId == currentUserId) ?? false
-    };
 
     public async Task<bool> DeleteCommentAsync(int commentId, string userId)
     {
@@ -249,26 +229,34 @@ public class PostsService : IPostsService
             .ToListAsync();
     }
 
-    public async Task<PostResponseDto> CreateAsync(CreatePostRequestDto dto, string userId)
+    public async Task<List<PostResponseDto>> GetUserPostsAsync(
+        string userId, string currentUserId, int page, int pageSize)
     {
-        string? imageUrl = null;
+        var posts = await _context.Posts
+            .Where(p => p.UserId == userId && !p.IsDeleted)
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Include(p => p.User)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments.Where(c => !c.IsDeleted))
+            .ToListAsync();
 
-        if (dto.Image != null)
-            imageUrl = await _blobStorage.UploadAsync(dto.Image, "posts");
-        else if (!string.IsNullOrEmpty(dto.SharedImageUrl))
-            imageUrl = dto.SharedImageUrl; // ← use shared image URL directly
-
-        var post = new Post
-        {
-            Content   = dto.Content,
-            ImageUrl  = imageUrl,
-            UserId    = userId,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _context.Posts.AddAsync(post);
-        await _context.SaveChangesAsync();
-        await _context.Entry(post).Reference(p => p.User).LoadAsync();
-        return MapToDto(post, userId);
+        return posts.Select(p => MapToDto(p, currentUserId)).ToList();
     }
+
+    private static PostResponseDto MapToDto(Post p, string currentUserId) => new()
+    {
+        Id                   = p.Id,
+        Content              = p.Content,
+        ImageUrl             = p.ImageUrl,
+        CreatedAt            = p.CreatedAt,
+        UserId               = p.UserId,
+        Username             = p.User?.UserName ?? "",
+        DisplayName          = p.User?.DisplayName ?? "",
+        AvatarUrl            = p.User?.AvatarUrl,
+        LikeCount            = p.Likes?.Count ?? 0,
+        CommentCount         = p.Comments?.Count ?? 0,
+        IsLikedByCurrentUser = p.Likes?.Any(l => l.UserId == currentUserId) ?? false
+    };
 }
