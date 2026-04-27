@@ -3,6 +3,7 @@ import { toggleLike, deletePost, getComments, addComment, sharePost, reportPost 
 import { useAuth } from '../../context/AuthContext';
 import Avatar from '../ui/Avatar';
 import api from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 interface Post {
   id: number;
@@ -46,6 +47,7 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
   const [commentsLoaded, setCommentsLoaded] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [reported, setReported] = useState(false);
+  const navigate = useNavigate();
 
   const handleReport = async () => {
     const reason = prompt('Reason for report:\n1. Spam\n2. Harassment\n3. HateSpeech\n4. FakeNews\n5. Other\n\nEnter reason:');
@@ -135,13 +137,13 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar src={post.avatarUrl} username={post.username} />
-          <div>
-            <p className="font-semibold text-gray-800">{post.displayName}</p>
-            <p className="text-xs text-gray-500">
-              {new Date(post.createdAt).toLocaleDateString()}
-            </p>
-          </div>
+            <Avatar src={post.avatarUrl} username={post.username} />
+            <div className="cursor-pointer" onClick={() => navigate(`/profile/${post.userId}`)}>
+                <p className="font-semibold text-gray-800 hover:text-blue-500">{post.displayName}</p>
+                <p className="text-xs text-gray-500">
+                {new Date(post.createdAt).toLocaleDateString()}
+                </p>
+            </div>
         </div>
         {user?.userId === post.userId && (
           <button onClick={handleDelete} disabled={isDeleting}

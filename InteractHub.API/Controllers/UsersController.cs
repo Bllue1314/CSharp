@@ -44,4 +44,16 @@ public class UsersController : ControllerBase
         var users = await _usersService.SearchAsync(q);
         return Ok(ApiResponse<List<UserResponseDto>>.Ok(users));
     }
+
+    /// <summary>Delete current user account</summary>
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteAccount()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var success = await _usersService.DeleteAccountAsync(userId);
+        if (!success)
+            return NotFound(ApiResponse<object>.Fail("User not found"));
+
+        return Ok(ApiResponse<object>.Ok(null!, "Account deleted"));
+    }
 }

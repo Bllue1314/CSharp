@@ -64,4 +64,21 @@ public class UsersService : IUsersService
         PostCount   = u.Posts?.Count ?? 0,
         FriendCount = u.SentFriendRequests?.Count ?? 0
     };
+
+    public async Task<bool> DeleteAccountAsync(string userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        // Soft delete — just deactivate
+        user.IsActive = false;
+        user.UserName = $"deleted_{userId}";
+        user.Email    = $"deleted_{userId}@deleted.com";
+        user.DisplayName = "Deleted User";
+        user.Bio = null;
+        user.AvatarUrl = null;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
 }

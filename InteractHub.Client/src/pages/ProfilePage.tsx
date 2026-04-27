@@ -8,6 +8,9 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Spinner from '../components/ui/Spinner';
 import PostCard from '../components/posts/PostCard';
+import { sendFriendRequest } from '../services/friendsService';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface ProfileUser {
   id: string;
@@ -46,25 +49,49 @@ interface ProfileFormData {
 }
 
 const ProfilePage = () => {
-  const { id }                    = useParams<{ id: string }>();
-  const { user: me }              = useAuth();
-  const [profile, setProfile]     = useState<ProfileUser | null>(null);
-  const [posts, setPosts]         = useState<Post[]>([]);
-  const [friends, setFriends]     = useState<Friend[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving]   = useState(false);
-  const [tab, setTab]             = useState<'posts' | 'friends'>('posts');
+  const { id }                        = useParams<{ id: string }>();
+  const { user: me }                  = useAuth();
+  const [profile, setProfile]         = useState<ProfileUser | null>(null);
+  const [posts, setPosts]             = useState<Post[]>([]);
+  const [friends, setFriends]         = useState<Friend[]>([]);
+  const [isLoading, setIsLoading]     = useState(true);
+  const [isEditing, setIsEditing]     = useState(false);
+  const [isSaving, setIsSaving]       = useState(false);
+  const [tab, setTab]                 = useState<'posts' | 'friends'>('posts');
+  const [friendStatus, setFriendStatus] = useState<'none' | 'friends' | 'pending'>('none');
+  const [addingFriend, setAddingFriend] = useState(false);
 
   const { register, handleSubmit, reset } = useForm<ProfileFormData>();
   const isOwnProfile = me?.userId === id;
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm(
+      'Are you sure you want to delete your account? This cannot be undone!'
+    );
+    if (!confirmed) return;
+
+    const doubleConfirm = confirm(
+      'Last warning — your account and all data will be permanently deleted. Continue?'
+    );
+    if (!doubleConfirm) return;
+
+    try {
+      await api.delete('/users/me');
+      logout();
+      navigate('/register');
+      alert('Account deleted successfully');
+    } catch {
+      alert('Failed to delete account');
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
       try {
         setIsLoading(true);
 
-        // Load profile
         const profileRes = await api.get(`/users/${id}`);
         setProfile(profileRes.data.data);
         reset({
@@ -72,14 +99,28 @@ const ProfilePage = () => {
           bio: profileRes.data.data.bio ?? ''
         });
 
-        // Load user's posts
         const postsRes = await api.get(`/posts?userId=${id}&page=1&pageSize=20`);
         setPosts(postsRes.data.data ?? []);
 
-        // Load friends
         const friendsRes = await api.get('/friends');
         setFriends(friendsRes.data.data ?? []);
 
+        // Check friendship status if not own profile
+        if (me?.userId !== id) {
+          const isFriend = friendsRes.data.data?.some(
+            (f: Friend) => f.username === profileRes.data.data.username
+          );
+          if (isFriend) {
+            setFriendStatus('friends');
+          } else {
+            // Check pending requests
+            const requestsRes = await api.get('/friends/requests');
+            const isPending = requestsRes.data.data?.some(
+              (f: Friend) => f.username === profileRes.data.data.username
+            );
+            setFriendStatus(isPending ? 'pending' : 'none');
+          }
+        }
       } catch {
         console.error('Failed to load profile');
       } finally {
@@ -102,6 +143,35 @@ const ProfilePage = () => {
       console.error('Failed to update profile');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAddFriend = async () => {
+    if (!id) return;
+    try {
+      setAddingFriend(true);
+      await sendFriendRequest(id);
+      setFriendStatus('pending');
+    } catch {
+      console.error('Failed to send friend request');
+    } finally {
+      setAddingFriend(false);
+    }
+  };
+
+  const renderFriendButton = () => {
+    if (isOwnProfile) return null;
+    switch (friendStatus) {
+      case 'friends':
+        return <Button variant="secondary" disabled>Friends ✓</Button>;
+      case 'pending':
+        return <Button variant="secondary" disabled>Requested</Button>;
+      default:
+        return (
+          <Button onClick={handleAddFriend} isLoading={addingFriend}>
+            Add Friend
+          </Button>
+        );
     }
   };
 
@@ -132,17 +202,28 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {isOwnProfile && (
-            <Button variant="secondary" onClick={() => setIsEditing(!isEditing)}>
-              {isEditing ? 'Cancel' : 'Edit Profile'}
-            </Button>
-          )}
+          {/* Action buttons */}
+          <div className="flex gap-2">
+            {renderFriendButton()}
+            {isOwnProfile && (
+              <Button variant="secondary" onClick={() => setIsEditing(!isEditing)}>
+                {isEditing ? 'Cancel' : 'Edit Profile'}
+              </Button>
+            )}
+            {isOwnProfile && (
+              <Button variant="danger" onClick={handleDeleteAccount}>
+                Delete Account
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Edit form */}
         {isEditing && (
-          <form onSubmit={handleSubmit(onSubmit)} className="mt-4 flex flex-col gap-3 border-t pt-4">
-            <Input label="Display Name" {...register('displayName', { required: true })} />
+          <form onSubmit={handleSubmit(onSubmit)}
+            className="mt-4 flex flex-col gap-3 border-t pt-4">
+            <Input label="Display Name"
+              {...register('displayName', { required: true })} />
             <Input label="Bio" {...register('bio')} />
             <Button type="submit" isLoading={isSaving}>Save Changes</Button>
           </form>
@@ -172,7 +253,7 @@ const ProfilePage = () => {
               <PostCard
                 key={post.id}
                 post={post}
-                onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))}
+                onDelete={(postId) => setPosts(prev => prev.filter(p => p.id !== postId))}
               />
             ))}
         </div>
