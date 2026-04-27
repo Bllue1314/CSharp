@@ -13,4 +13,5 @@ public interface IPostsService
     Task<bool> DeleteCommentAsync(int commentId, string userId);
     Task<bool> ReportPostAsync(int postId, ReportPostDto dto, string userId);
     Task<List<string>> GetTrendingHashtagsAsync();
+    Task<List<PostResponseDto>> GetUserPostsAsync(string userId, string currentUserId, int page, int pageSize);
 }

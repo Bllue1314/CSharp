@@ -248,4 +248,20 @@ public class PostsService : IPostsService
             .Select(g => g.Key)
             .ToListAsync();
     }
+
+    public async Task<List<PostResponseDto>> GetUserPostsAsync(
+        string userId, string currentUserId, int page, int pageSize)
+    {
+        var posts = await _context.Posts
+            .Where(p => p.UserId == userId && !p.IsDeleted)
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Include(p => p.User)
+            .Include(p => p.Likes)
+            .Include(p => p.Comments.Where(c => !c.IsDeleted))
+            .ToListAsync();
+
+        return posts.Select(p => MapToDto(p, currentUserId)).ToList();
+    }
 }

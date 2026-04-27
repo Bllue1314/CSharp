@@ -148,4 +148,23 @@ public class PostsController : ControllerBase
         var trending = await _postsService.GetTrendingHashtagsAsync();
         return Ok(ApiResponse<List<string>>.Ok(trending));
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetFeed(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? userId = null)
+    {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        // If userId is specified, get that user's posts
+        if (userId != null)
+        {
+            var userPosts = await _postsService.GetUserPostsAsync(userId, currentUserId, page, pageSize);
+            return Ok(ApiResponse<List<PostResponseDto>>.Ok(userPosts));
+        }
+
+        var posts = await _postsService.GetFeedAsync(currentUserId, page, pageSize);
+        return Ok(ApiResponse<List<PostResponseDto>>.Ok(posts));
+    }
 }

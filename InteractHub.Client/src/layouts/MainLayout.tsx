@@ -5,13 +5,21 @@ import TrendingHashtags from '../components/ui/TrendingHashtags';
 const MainLayout = () => (
   <div className="min-h-screen bg-gray-100">
     <Navbar />
-    <div className="max-w-5xl mx-auto px-4 py-6 flex gap-6">
-      <main className="flex-1 min-w-0">
-        <Outlet />
-      </main>
-      <aside className="hidden lg:block w-64 flex-shrink-0">
-        <TrendingHashtags />
-      </aside>
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="flex gap-6">
+        {/* Left spacer — only on large screens */}
+        <div className="hidden lg:block w-64 flex-shrink-0" />
+
+        {/* Main content — always centered */}
+        <main className="flex-1 max-w-2xl mx-auto w-full">
+          <Outlet />
+        </main>
+
+        {/* Right sidebar */}
+        <aside className="hidden lg:block w-64 flex-shrink-0">
+          <TrendingHashtags />
+        </aside>
+      </div>
     </div>
   </div>
 );
