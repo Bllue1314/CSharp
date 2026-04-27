@@ -172,7 +172,7 @@ const ProfilePage = () => {
               <PostCard
                 key={post.id}
                 post={post}
-                onDelete={id => setPosts(prev => prev.filter(p => p.id !== id)}
+                onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))}
               />
             ))}
         </div>
