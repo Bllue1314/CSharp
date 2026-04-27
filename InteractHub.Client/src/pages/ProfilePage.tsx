@@ -10,7 +10,6 @@ import Spinner from '../components/ui/Spinner';
 import PostCard from '../components/posts/PostCard';
 import { sendFriendRequest } from '../services/friendsService';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 
 interface ProfileUser {
   id: string;
