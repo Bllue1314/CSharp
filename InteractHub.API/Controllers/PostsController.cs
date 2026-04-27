@@ -1,6 +1,5 @@
 namespace InteractHub.API.Controllers;
 
-// Controllers/PostsController.cs
 [ApiController]
 [Route("api/posts")]
 [Authorize]
@@ -17,10 +16,20 @@ public class PostsController : ControllerBase
     /// <summary>Get paginated post feed</summary>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<List<PostResponseDto>>), 200)]
-    public async Task<IActionResult> GetFeed([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+    public async Task<IActionResult> GetFeed(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? userId = null)
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var posts = await _postsService.GetFeedAsync(userId, page, pageSize);
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        if (userId != null)
+        {
+            var userPosts = await _postsService.GetUserPostsAsync(userId, currentUserId, page, pageSize);
+            return Ok(ApiResponse<List<PostResponseDto>>.Ok(userPosts));
+        }
+
+        var posts = await _postsService.GetFeedAsync(currentUserId, page, pageSize);
         return Ok(ApiResponse<List<PostResponseDto>>.Ok(posts));
     }
 
@@ -117,6 +126,7 @@ public class PostsController : ControllerBase
         return StatusCode(201, ApiResponse<CommentResponseDto>.Ok(comment, "Comment added"));
     }
 
+    /// <summary>Delete a comment</summary>
     [HttpDelete("{id}/comments/{commentId}")]
     public async Task<IActionResult> DeleteComment(int id, int commentId)
     {
@@ -147,24 +157,5 @@ public class PostsController : ControllerBase
     {
         var trending = await _postsService.GetTrendingHashtagsAsync();
         return Ok(ApiResponse<List<string>>.Ok(trending));
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> GetFeed(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] string? userId = null)
-    {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-
-        // If userId is specified, get that user's posts
-        if (userId != null)
-        {
-            var userPosts = await _postsService.GetUserPostsAsync(userId, currentUserId, page, pageSize);
-            return Ok(ApiResponse<List<PostResponseDto>>.Ok(userPosts));
-        }
-
-        var posts = await _postsService.GetFeedAsync(currentUserId, page, pageSize);
-        return Ok(ApiResponse<List<PostResponseDto>>.Ok(posts));
     }
 }
