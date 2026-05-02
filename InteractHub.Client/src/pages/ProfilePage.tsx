@@ -11,6 +11,7 @@ import PostCard from '../components/posts/PostCard';
 import { sendFriendRequest } from '../services/friendsService';
 import { useNavigate } from 'react-router-dom';
 
+
 interface ProfileUser {
   id: string;
   username: string;
@@ -37,6 +38,7 @@ interface Post {
 
 interface Friend {
   id: string;
+  friendUserId?: string;
   username: string;
   displayName: string;
   avatarUrl?: string;
@@ -265,10 +267,11 @@ const ProfilePage = () => {
             ? <p className="text-center text-gray-500 py-8">No friends yet</p>
             : friends.map(f => (
               <div key={f.id}
-                className="bg-white rounded-xl shadow p-4 flex items-center gap-3">
+                className="bg-white rounded-xl shadow p-4 flex items-center gap-3 cursor-pointer hover:bg-gray-50"
+                onClick={() => navigate(`/profile/${f.friendUserId ?? f.id}`)}>
                 <Avatar src={f.avatarUrl} username={f.username} />
                 <div>
-                  <p className="font-semibold text-gray-800">{f.displayName}</p>
+                  <p className="font-semibold text-gray-800 hover:text-blue-500">{f.displayName}</p>
                   <p className="text-sm text-gray-500">@{f.username}</p>
                 </div>
               </div>
