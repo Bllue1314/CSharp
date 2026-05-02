@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Avatar from '../ui/Avatar';
 import Button from '../ui/Button';
 import { sendFriendRequest, getFriends, getPendingRequests } from '../../services/friendsService';
@@ -19,13 +20,13 @@ interface Props {
 
 const FriendCard = ({ user, showAddButton = false }: Props) => {
   const { user: currentUser }     = useAuth();
+  const navigate                  = useNavigate();
   const [status, setStatus]       = useState<'none' | 'friends' | 'pending' | 'self'>('none');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!showAddButton) { setIsLoading(false); return; }
 
-    // Check if this is the current user
     if (currentUser?.userId === user.id) {
       setStatus('self');
       setIsLoading(false);
@@ -66,9 +67,7 @@ const FriendCard = ({ user, showAddButton = false }: Props) => {
 
   const renderButton = () => {
     if (!showAddButton || status === 'self') return null;
-    if (isLoading) return (
-      <Button variant="secondary" disabled>...</Button>
-    );
+    if (isLoading) return <Button variant="secondary" disabled>...</Button>;
 
     switch (status) {
       case 'friends':
@@ -82,10 +81,14 @@ const FriendCard = ({ user, showAddButton = false }: Props) => {
 
   return (
     <div className="bg-white rounded-xl shadow p-4 flex items-center justify-between">
-      <div className="flex items-center gap-3">
+      <div
+        className="flex items-center gap-3 cursor-pointer flex-1"
+        onClick={() => navigate(`/profile/${user.id}`)}>
         <Avatar src={user.avatarUrl} username={user.username} />
         <div>
-          <p className="font-semibold text-gray-800">{user.displayName}</p>
+          <p className="font-semibold text-gray-800 hover:text-blue-500">
+            {user.displayName}
+          </p>
           <p className="text-sm text-gray-500">@{user.username}</p>
         </div>
       </div>

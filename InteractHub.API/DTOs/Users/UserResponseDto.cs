@@ -1,4 +1,4 @@
-namespace InteractHub.API.DTOs.Users;
+// DTOs/Users/UserResponseDto.cs
 public class UserResponseDto
 {
     public string Id { get; set; } = string.Empty;
@@ -9,4 +9,5 @@ public class UserResponseDto
     public DateTime CreatedAt { get; set; }
     public int PostCount { get; set; }
     public int FriendCount { get; set; }
+    public string? FriendUserId { get; set; } // ← add this
 }

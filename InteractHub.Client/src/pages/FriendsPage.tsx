@@ -3,9 +3,11 @@ import { getFriends, getPendingRequests, acceptFriendRequest, removeFriend } fro
 import Avatar from '../components/ui/Avatar';
 import Spinner from '../components/ui/Spinner';
 import Button from '../components/ui/Button';
+import { useNavigate } from 'react-router-dom';
 
 interface FriendUser {
   id: string;
+  friendUserId?: string;
   username: string;
   displayName: string;
   bio?: string;
@@ -17,6 +19,7 @@ const FriendsPage = () => {
   const [requests, setRequests]   = useState<FriendUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab]             = useState<'friends' | 'requests'>('friends');
+  const navigate                  = useNavigate();
 
   useEffect(() => {
     const load = async () => {
@@ -60,10 +63,14 @@ const FriendsPage = () => {
             : friends.map(f => (
               <div key={f.id}
                 className="flex items-center justify-between bg-white rounded-xl shadow p-4">
-                <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center gap-3 cursor-pointer flex-1"
+                  onClick={() => navigate(`/profile/${f.friendUserId ?? f.id}`)}>
                   <Avatar src={f.avatarUrl} username={f.username} />
                   <div>
-                    <p className="font-semibold text-gray-800">{f.displayName}</p>
+                    <p className="font-semibold text-gray-800 hover:text-blue-500">
+                      {f.displayName}
+                    </p>
                     <p className="text-sm text-gray-500">@{f.username}</p>
                   </div>
                 </div>
@@ -94,10 +101,14 @@ const FriendsPage = () => {
             : requests.map(r => (
               <div key={r.id}
                 className="flex items-center justify-between bg-white rounded-xl shadow p-4">
-                <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center gap-3 cursor-pointer flex-1"
+                  onClick={() => navigate(`/profile/${r.friendUserId ?? r.id}`)}>
                   <Avatar src={r.avatarUrl} username={r.username} />
                   <div>
-                    <p className="font-semibold text-gray-800">{r.displayName}</p>
+                    <p className="font-semibold text-gray-800 hover:text-blue-500">
+                      {r.displayName}
+                    </p>
                     <p className="text-sm text-gray-500">@{r.username}</p>
                   </div>
                 </div>

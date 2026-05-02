@@ -17,7 +17,7 @@ public class FriendsService : IFriendsService
     {
         var friendships = await _context.Friendships
             .Where(f => (f.SenderId == userId || f.ReceiverId == userId)
-                     && f.Status == FriendshipStatus.Accepted)
+                    && f.Status == FriendshipStatus.Accepted)
             .Include(f => f.Sender)
             .Include(f => f.Receiver)
             .ToListAsync();
@@ -26,12 +26,13 @@ public class FriendsService : IFriendsService
             var friend = f.SenderId == userId ? f.Receiver : f.Sender;
             return new UserResponseDto
             {
-                Id          = f.Id.ToString(),
+                Id          = f.Id.ToString(),    // friendship ID for unfriending
                 Username    = friend.UserName!,
                 DisplayName = friend.DisplayName,
                 Bio         = friend.Bio,
                 AvatarUrl   = friend.AvatarUrl,
-                CreatedAt   = friend.CreatedAt
+                CreatedAt   = friend.CreatedAt,
+                FriendUserId = friend.Id          // ← add actual user ID
             };
         }).ToList();
     }

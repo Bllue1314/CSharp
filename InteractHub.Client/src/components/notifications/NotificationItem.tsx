@@ -1,4 +1,5 @@
 import { markAsRead } from '../../services/notificationsService';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   id: number;
@@ -15,10 +16,15 @@ interface Props {
 }
 
 const NotificationItem = ({ notification, onRead }: Props) => {
+  const navigate = useNavigate();
+
   const handleClick = async () => {
     if (!notification.isRead) {
       await markAsRead(notification.id);
       onRead(notification.id);
+    }
+    if (notification.postId) {
+      navigate(`/?postId=${notification.postId}`);
     }
   };
 

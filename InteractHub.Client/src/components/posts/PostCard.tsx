@@ -216,7 +216,11 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
               <Avatar src={comment.avatarUrl} username={comment.username} size="sm" />
               <div className="bg-gray-100 rounded-xl px-3 py-2 flex-1">
                 <div className="flex justify-between items-center">
-                  <p className="text-xs font-semibold text-gray-700">{comment.username}</p>
+                  <p
+                    className="text-xs font-semibold text-gray-700 cursor-pointer hover:text-blue-500"
+                    onClick={() => navigate(`/profile/${comment.userId}`)}>
+                    {comment.username}
+                  </p>
                   {user?.userId === comment.userId && (
                     <button
                       onClick={async () => {
