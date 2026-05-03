@@ -1,0 +1,69 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.userprefs
+.idea/
+*.DotSettings.user
+
+# NuGet
+packages/
+*.nupkg
+project.lock.json
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+build/
+bld/
+
+# ASP.NET
+wwwroot/lib/
+appsettings.Development.json
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp/
+.pnp.js
+
+# Frontend build
+dist/
+dist-ssr/
+*.local
+
+# Vite
+.vite/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Coverage reports
+coverage/
+coverage-report/
+*.cobertura.xml
+TestResults/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Azure
+.azure/
+PublishProfiles/
+*.pubxml
+*.pubxml.user
+
+# Logs
+*.log
+logs/
