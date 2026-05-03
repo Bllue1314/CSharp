@@ -48,6 +48,24 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
   const [sharing, setSharing] = useState(false);
   const [reported, setReported] = useState(false);
   const navigate = useNavigate();
+  const [isEditing, setIsEditing]     = useState(false);
+  const [editContent, setEditContent] = useState(post.content);
+  const [isSaving, setIsSaving]       = useState(false);
+  const [currentContent, setCurrentContent] = useState(post.content);
+
+  const handleEdit = async () => {
+    if (!editContent.trim()) return;
+    try {
+      setIsSaving(true);
+      const res = await api.put(`/posts/${post.id}`, { content: editContent });
+      setCurrentContent(res.data.data.content);
+      setIsEditing(false);
+    } catch (err: any) {
+      console.error('Failed to edit post:', err.response?.status);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleReport = async () => {
     const reason = prompt('Reason for report:\n1. Spam\n2. Harassment\n3. HateSpeech\n4. FakeNews\n5. Other\n\nEnter reason:');
@@ -146,19 +164,54 @@ const PostCard = ({ post, onDelete }: PostCardProps) => {
             </div>
         </div>
         {user?.userId === post.userId && (
-          <button onClick={handleDelete} disabled={isDeleting}
-            className="text-red-400 hover:text-red-600 text-sm">
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setIsEditing(!isEditing); setEditContent(currentContent); }}
+              className="text-blue-400 hover:text-blue-600 text-sm">
+              {isEditing ? 'Cancel' : 'Edit'}
+            </button>
+            <button onClick={handleDelete} disabled={isDeleting}
+              className="text-red-400 hover:text-red-600 text-sm">
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
+          </div>
         )}
       </div>
 
       {/* Content */}
-      <p className="text-gray-700">{post.content}</p>
-      {post.imageUrl && (
-        <img src={post.imageUrl} alt="post"
-          className="rounded-lg max-h-96 object-cover w-full" />
-      )}
+        {isEditing ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 text-sm resize-none outline-none focus:ring-2 focus:ring-blue-500"
+              rows={3}
+              maxLength={2000}
+            />
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-gray-400">{editContent.length}/2000</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200">
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEdit}
+                  disabled={isSaving || !editContent.trim()}
+                  className="px-3 py-1 text-sm text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:opacity-50">
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p className="text-gray-700">{currentContent}</p>
+        )}
+        {post.imageUrl && (
+          <img src={post.imageUrl} alt="post"
+            className="rounded-lg max-h-96 object-cover w-full" />
+        )}
 
       {/* Actions */}
       <div className="flex gap-4 text-sm text-gray-500 border-t pt-2">
