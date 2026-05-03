@@ -13,6 +13,27 @@ public class UsersController : ControllerBase
         _usersService = usersService;
     }
 
+    /// <summary>Search users by username or display name</summary>
+    [HttpGet("search")]
+    [ProducesResponseType(typeof(ApiResponse<List<UserResponseDto>>), 200)]
+    public async Task<IActionResult> Search([FromQuery] string q)
+    {
+        var users = await _usersService.SearchAsync(q);
+        return Ok(ApiResponse<List<UserResponseDto>>.Ok(users));
+    }
+
+    /// <summary>Get current user profile</summary>
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMyProfile()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var user = await _usersService.GetProfileAsync(userId);
+        if (user == null)
+            return NotFound(ApiResponse<UserResponseDto>.Fail("User not found"));
+
+        return Ok(ApiResponse<UserResponseDto>.Ok(user));
+    }
+
     /// <summary>Get a user's public profile</summary>
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(ApiResponse<UserResponseDto>), 200)]
@@ -34,15 +55,6 @@ public class UsersController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
         var updated = await _usersService.UpdateProfileAsync(userId, dto);
         return Ok(ApiResponse<UserResponseDto>.Ok(updated, "Profile updated"));
-    }
-
-    /// <summary>Search users by username or display name</summary>
-    [HttpGet("search")]
-    [ProducesResponseType(typeof(ApiResponse<List<UserResponseDto>>), 200)]
-    public async Task<IActionResult> Search([FromQuery] string q)
-    {
-        var users = await _usersService.SearchAsync(q);
-        return Ok(ApiResponse<List<UserResponseDto>>.Ok(users));
     }
 
     /// <summary>Delete current user account</summary>

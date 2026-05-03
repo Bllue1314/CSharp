@@ -10,7 +10,7 @@ import Spinner from '../components/ui/Spinner';
 import PostCard from '../components/posts/PostCard';
 import { sendFriendRequest } from '../services/friendsService';
 import { useNavigate } from 'react-router-dom';
-
+import { useRef } from 'react';
 
 interface ProfileUser {
   id: string;
@@ -67,6 +67,10 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
 
+  const [avatarFile, setAvatarFile]   = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  const avatarInputRef = useRef<HTMLInputElement>(null);
   const handleDeleteAccount = async () => {
     const confirmed = confirm(
       'Are you sure you want to delete your account? This cannot be undone!'
@@ -137,9 +141,12 @@ const ProfilePage = () => {
       const formData = new FormData();
       formData.append('displayName', data.displayName);
       formData.append('bio', data.bio);
+      if (avatarFile) formData.append('avatar', avatarFile);
       const res = await api.put('/users/me', formData);
       setProfile(res.data.data);
       setIsEditing(false);
+      setAvatarFile(null);
+      setAvatarPreview(null);
     } catch {
       console.error('Failed to update profile');
     } finally {
@@ -158,6 +165,21 @@ const ProfilePage = () => {
     } finally {
       setAddingFriend(false);
     }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files allowed');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File must be less than 5MB');
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
   const renderFriendButton = () => {
@@ -223,6 +245,42 @@ const ProfilePage = () => {
         {isEditing && (
           <form onSubmit={handleSubmit(onSubmit)}
             className="mt-4 flex flex-col gap-3 border-t pt-4">
+
+            {/* Avatar upload */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700">
+                Profile Picture
+              </label>
+              <div className="flex items-center gap-4">
+                <Avatar
+                  src={avatarPreview ?? profile.avatarUrl}
+                  username={profile.username}
+                  size="lg"
+                />
+                <button
+                  type="button"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm transition-colors">
+                  Choose Photo
+                </button>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
+                {avatarPreview && (
+                  <button
+                    type="button"
+                    onClick={() => { setAvatarFile(null); setAvatarPreview(null); }}
+                    className="text-red-400 hover:text-red-600 text-sm">
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+
             <Input label="Display Name"
               {...register('displayName', { required: true })} />
             <Input label="Bio" {...register('bio')} />

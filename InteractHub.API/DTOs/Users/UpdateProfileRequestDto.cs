@@ -8,4 +8,5 @@ public class UpdateProfileRequestDto
     public string? Bio { get; set; }
 
     public IFormFile? Avatar { get; set; }
+    public IFormFile? CoverPhoto { get; set; }
 }
